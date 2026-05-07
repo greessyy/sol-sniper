@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
 <title>SOL SNIPER</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
@@ -1018,6 +1019,13 @@ function startAutoRefresh() {
 loadData();
 renderTrades();
 startAutoRefresh();
+  if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sol-sniper/sw.js').then(reg => {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') console.log('Notifications enabled');
+    });
+  });
+}
 </script>
 </body>
 </html>
