@@ -405,6 +405,8 @@
     <div class="pin-dot" id="d1"></div>
     <div class="pin-dot" id="d2"></div>
     <div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d4"></div>
+    <div class="pin-dot" id="d5"></div>
   </div>
   <div class="pin-pad">
     <button class="pin-btn" onclick="pinInput('1')">1</button>
@@ -556,37 +558,84 @@
 </div>
 
 <script>
-const CORRECT_PIN = '2661';
+const CORRECT_PIN = '266126';  // ← 6-digit PIN, change this to whatever you want
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_MS = 10 * 60 * 1000; // 10 minutes
+
 let pinEntry = '';
 
-function pinInput(d) {
-  if (pinEntry.length >= 4) return;
-  pinEntry += d;
-  for (let i = 0; i < 4; i++) {
-    document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
+function getLockout() {
+  const lock = localStorage.getItem('sniper_lockout');
+  const attempts = parseInt(localStorage.getItem('sniper_attempts') || '0');
+  return { lock: lock ? parseInt(lock) : 0, attempts };
+}
+function setAttempts(n) { localStorage.setItem('sniper_attempts', n); }
+function setLockout() { localStorage.setItem('sniper_lockout', Date.now() + LOCKOUT_MS); }
+function clearLockout() { localStorage.removeItem('sniper_lockout'); localStorage.removeItem('sniper_attempts'); }
+
+function checkLockout() {
+  const { lock, attempts } = getLockout();
+  if (lock && Date.now() < lock) {
+    const mins = Math.ceil((lock - Date.now()) / 60000);
+    document.getElementById('pin-error').textContent = `Locked — try again in ${mins}m`;
+    return true;
   }
-  if (pinEntry.length === 4) {
+  if (lock && Date.now() >= lock) clearLockout();
+  return false;
+}
+
+// Show lockout timer if locked on load
+window.addEventListener('load', () => {
+  if (checkLockout()) {
+    setInterval(() => checkLockout(), 10000);
+  }
+});
+
+function pinInput(d) {
+  if (checkLockout()) return;
+  if (pinEntry.length >= 6) return;
+  pinEntry += d;
+  updateDots();
+  if (pinEntry.length === 6) {
     if (pinEntry === CORRECT_PIN) {
+      clearLockout();
       document.getElementById('pin-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       initApp();
     } else {
-      document.getElementById('pin-error').textContent = 'Wrong PIN';
+      const { attempts } = getLockout();
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      const remaining = MAX_ATTEMPTS - newAttempts;
       document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('shake'));
+      if (remaining <= 0) {
+        setLockout();
+        document.getElementById('pin-error').textContent = `Too many attempts — locked for 10 min`;
+      } else {
+        document.getElementById('pin-error').textContent = `Wrong PIN — ${remaining} attempt${remaining===1?'':'s'} left`;
+      }
       setTimeout(() => {
         pinEntry = '';
-        document.querySelectorAll('.pin-dot').forEach(d => { d.classList.remove('filled','shake'); });
-        document.getElementById('pin-error').textContent = '';
-      }, 600);
+        updateDots();
+        if (remaining > 0) document.getElementById('pin-error').textContent = '';
+        document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('shake'));
+      }, 700);
     }
   }
 }
+
 function pinDelete() {
-  pinEntry = pinEntry.slice(0,-1);
-  for (let i = 0; i < 4; i++) {
-    document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
-  }
+  if (checkLockout()) return;
+  pinEntry = pinEntry.slice(0, -1);
+  updateDots();
   document.getElementById('pin-error').textContent = '';
+}
+
+function updateDots() {
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById('d' + i);
+    if (el) el.classList.toggle('filled', i < pinEntry.length);
+  }
 }
 
 // State
