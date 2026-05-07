@@ -5,9 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.json">
 <title>SOL SNIPER</title>
+<script>
+// PIN PROTECTION — change this to your PIN
+const CORRECT_PIN = '2661';
+const PIN_KEY = 'sniper_unlocked';
+
+function checkPin() {
+  if (sessionStorage.getItem(PIN_KEY) === 'yes') return;
+  document.getElementById('pin-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function updateDots(len) {
+  document.querySelectorAll('.pin-dot').forEach((d,i) => {
+    d.style.background = i < len ? '#00ff88' : 'transparent';
+  });
+}
+function pinKey(v) {
+  const disp = document.getElementById('pin-display');
+  if (v === 'DEL') { disp.textContent = disp.textContent.slice(0,-1); updateDots(disp.textContent.length); return; }
+  if (disp.textContent.length >= 6) return;
+  disp.textContent += v;
+  updateDots(disp.textContent.length);
+  if (disp.textContent.length >= CORRECT_PIN.length) {
+    if (disp.textContent === CORRECT_PIN) {
+      sessionStorage.setItem(PIN_KEY, 'yes');
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      loadData(); renderTrades(); startAutoRefresh();
+    } else {
+      document.getElementById('pin-error').style.display = 'block';
+      setTimeout(() => { disp.textContent = ''; document.getElementById('pin-error').style.display = 'none'; }, 900);
+    }
+  }
+}
+window.addEventListener('DOMContentLoaded', checkPin);
+</script>
 <style>
+#pin-screen {
+  display: none; position: fixed; inset: 0;
+  background: #050508; z-index: 99999;
+  flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+.pin-logo { font-size: 22px; letter-spacing: 4px; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,.5); margin-bottom: 6px; }
+.pin-logo span { color: #ff3366; }
+.pin-sub { font-size: 10px; color: #555570; letter-spacing: 2px; margin-bottom: 32px; }
+.pin-dots { display: flex; gap: 12px; margin-bottom: 8px; }
+.pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #1a1a2e; background: transparent; transition: background .15s; }
+#pin-display-wrap { margin-bottom: 32px; }
+#pin-error { color: #ff3366; font-size: 10px; text-align: center; letter-spacing: 1px; display: none; margin-top: 4px; }
+.pin-grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+.pin-btn {
+  height: 70px; border-radius: 12px;
+  background: #0e0e16; border: 1px solid #1a1a2e;
+  color: #e0e0e0; font-family: 'Share Tech Mono', monospace;
+  font-size: 20px; cursor: pointer; transition: all .1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.pin-btn:active { background: rgba(0,255,136,.15); border-color: #00ff88; color: #00ff88; transform: scale(.93); }
+.pin-btn.del { color: #ff3366; font-size: 14px; }
+</style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
 
   :root {
@@ -398,6 +456,33 @@
 </style>
 </head>
 <body>
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <div class="pin-logo">SOL<span>⚡</span>SNIPER</div>
+  <div class="pin-sub">// ENTER ACCESS CODE</div>
+  <div id="pin-display-wrap">
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div id="pin-display" style="display:none"></div>
+    <div id="pin-error">⚠ WRONG PIN</div>
+  </div>
+  <div class="pin-grid">
+    <div class="pin-btn" onclick="pinKey('1')">1</div>
+    <div class="pin-btn" onclick="pinKey('2')">2</div>
+    <div class="pin-btn" onclick="pinKey('3')">3</div>
+    <div class="pin-btn" onclick="pinKey('4')">4</div>
+    <div class="pin-btn" onclick="pinKey('5')">5</div>
+    <div class="pin-btn" onclick="pinKey('6')">6</div>
+    <div class="pin-btn" onclick="pinKey('7')">7</div>
+    <div class="pin-btn" onclick="pinKey('8')">8</div>
+    <div class="pin-btn" onclick="pinKey('9')">9</div>
+    <div class="pin-btn" onclick="pinKey('0')" style="grid-column:2">0</div>
+    <div class="pin-btn del" onclick="pinKey('DEL')">⌫</div>
+  </div>
+</div>
+
 <div id="app">
 
   <!-- HEADER -->
@@ -600,60 +685,47 @@ function setStatus(live, text) {
 }
 
 // =============================================
-// DEXSCREENER API — Live Solana tokens
+// DEXSCREENER API — Live Solana memecoins
 // =============================================
 async function fetchDexScreener() {
+  const results = [];
+  // Latest token profiles (newest launches)
   try {
-    // Get latest Solana tokens by volume from DexScreener
-    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112', {
-      signal: AbortSignal.timeout(8000)
-    });
-    if (!res.ok) throw new Error('DexScreener failed');
-    const data = await res.json();
-    return data.pairs || [];
-  } catch(e) {
-    console.warn('DexScreener primary failed, trying search:', e);
-    return fetchDexScreenerSearch();
-  }
-}
-
-async function fetchDexScreenerSearch() {
-  try {
-    // Search for hot Solana pairs
-    const queries = ['SOL', 'pump', 'degen'];
-    const results = [];
-    for (const q of queries) {
-      const r = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${q}`, {
-        signal: AbortSignal.timeout(6000)
-      });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.pairs) results.push(...d.pairs.filter(p => p.chainId === 'solana'));
+    const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1', { signal: AbortSignal.timeout(8000) });
+    if (r1.ok) {
+      const d1 = await r1.json();
+      const mints = (Array.isArray(d1) ? d1 : []).filter(t => t.chainId === 'solana').slice(0,20).map(t => t.tokenAddress);
+      for (const mint of mints.slice(0,8)) {
+        try {
+          const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, { signal: AbortSignal.timeout(5000) });
+          if (r.ok) { const d = await r.json(); if (d.pairs) results.push(...d.pairs.filter(p => p.chainId === 'solana')); }
+        } catch(e) {}
       }
     }
-    return results;
-  } catch(e) {
-    console.warn('DexScreener search failed:', e);
-    return [];
+  } catch(e) { console.warn('profiles failed', e); }
+
+  // Search pump.fun, moonshot, raydium new pairs
+  const queries = ['pump.fun', 'moonshot', 'meme', 'pepe', 'dog', 'cat', 'trump', 'sol'];
+  for (const q of queries) {
+    try {
+      const r = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${q}`, { signal: AbortSignal.timeout(5000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.pairs) results.push(...d.pairs.filter(p =>
+          p.chainId === 'solana' &&
+          parseFloat(p.fdv || 0) < 5000000 &&
+          parseFloat(p.volume?.h24 || 0) > 1000
+        ));
+      }
+    } catch(e) {}
   }
+
+  // Deduplicate by pairAddress
+  const seen = new Set();
+  return results.filter(p => { if (seen.has(p.pairAddress)) return false; seen.add(p.pairAddress); return true; });
 }
 
-async function fetchNewPairs() {
-  try {
-    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112', {
-      signal: AbortSignal.timeout(8000)
-    });
-    const data = await res.json();
-    const pairs = (data.pairs || []).filter(p =>
-      p.chainId === 'solana' &&
-      p.pairCreatedAt &&
-      Date.now() - p.pairCreatedAt < 24 * 3600 * 1000
-    );
-    return pairs;
-  } catch(e) {
-    return [];
-  }
-}
+async function fetchNewPairs() { return []; }
 
 // =============================================
 // RUGCHECK API
@@ -753,26 +825,60 @@ function renderHype() {
     return;
   }
 
-  // Hot coins = high volume + positive change
-  const hot = [...coins].sort((a,b) => b.volume24h - a.volume24h).slice(0, 15);
+  // Score each coin as opportunity
+  function scoreOpportunity(c) {
+    let score = 0;
+    const ageHrs = c.created ? (Date.now() - c.created) / 3600000 : 999;
+    if (ageHrs < 1) score += 40;
+    else if (ageHrs < 6) score += 25;
+    else if (ageHrs < 24) score += 10;
+    if (c.change1h > 50) score += 30;
+    else if (c.change1h > 20) score += 20;
+    else if (c.change1h > 5) score += 10;
+    if (c.mcap > 0 && c.mcap < 100000) score += 30;
+    else if (c.mcap < 500000) score += 20;
+    else if (c.mcap < 2000000) score += 10;
+    const buyRatio = c.txns24h > 0 ? c.buys24h / c.txns24h : 0;
+    if (buyRatio > 0.7) score += 20;
+    else if (buyRatio > 0.55) score += 10;
+    if (c.volume24h > 50000) score += 10;
+    if (c.volume24h > 200000) score += 10;
+    if (c.rugScore !== null && c.rugScore < 300) score += 15;
+    return score;
+  }
+
+  const hot = [...coins].map(c => ({...c, oppScore: scoreOpportunity(c)}))
+    .sort((a,b) => b.oppScore - a.oppScore).slice(0, 20);
   const pt = perTradeAmount();
 
   el.innerHTML = hot.map(c => {
-    const isNew = c.created && Date.now() - c.created < 6 * 3600 * 1000;
+    const ageHrs = c.created ? (Date.now() - c.created) / 3600000 : 999;
+    const isNew = ageHrs < 6;
+    const isUltraNew = ageHrs < 1;
     const isHot = c.change1h > 20;
     const buyRatio = c.txns24h > 0 ? (c.buys24h / c.txns24h * 100).toFixed(0) : 0;
+    const oppPct = Math.min(100, c.oppScore);
+    const oppColor = oppPct > 70 ? 'var(--safe)' : oppPct > 40 ? 'var(--warn)' : 'var(--muted)';
+    const signal = oppPct > 70 ? '🔥 STRONG SIGNAL' : oppPct > 40 ? '⚡ WATCH' : '👀 MONITOR';
     const sources = [];
-    if (c.volume24h > 100000) sources.push('<span class="tag tag-whale">🐋 WHALE</span>');
-    if (isNew) sources.push('<span class="tag tag-new">🆕 NEW LAUNCH</span>');
+    if (isUltraNew) sources.push('<span class="tag tag-pump">⚡ JUST LAUNCHED</span>');
+    else if (isNew) sources.push('<span class="tag tag-new">🆕 NEW</span>');
+    if (c.volume24h > 100000) sources.push('<span class="tag tag-whale">🐋 WHALE VOL</span>');
     if (isHot) sources.push('<span class="tag tag-pump">🚀 PUMPING</span>');
-    if (buyRatio > 60) sources.push('<span class="tag tag-tg">📈 BUY PRESSURE</span>');
+    if (buyRatio > 65) sources.push('<span class="tag tag-tg">📈 BUY PRESSURE'+buyRatio+'%</span>');
+    if (c.mcap > 0 && c.mcap < 200000) sources.push('<span class="tag tag-tg">💎 LOW MCAP</span>');
 
-    return `<div class="signal-card">
-      ${isNew ? '<div class="early-banner">⚠️ EARLY ENTRY — HIGH RISK / HIGH REWARD — DYOR</div>' : ''}
+    return `<div class="signal-card" style="border-color:${oppPct>70?'rgba(0,255,136,.4)':oppPct>40?'rgba(255,170,0,.3)':''}" >
+      ${isUltraNew ? '<div class="early-banner">⚡ JUST LAUNCHED — ULTRA EARLY — HIGH RISK</div>' : isNew ? '<div class="early-banner">⚠️ EARLY ENTRY — HIGH RISK / HIGH REWARD</div>' : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-family:var(--font-mono);font-size:9px;color:${oppColor}">${signal}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;color:${oppColor}">SCORE: ${oppPct}/100</span>
+      </div>
+      <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:8px"><div style="height:100%;width:${oppPct}%;background:${oppColor};border-radius:2px"></div></div>
       <div class="signal-header">
         <div>
           <div class="signal-name">${c.ticker} <span style="color:var(--muted);font-size:11px;font-weight:400">${c.name}</span></div>
-          <div class="signal-source">${ageStr(c.created)} • ${fmtNum(c.volume24h)} vol</div>
+          <div class="signal-source">${ageStr(c.created)} • ${fmtNum(c.volume24h)} vol • mcap ${fmtNum(c.mcap)}</div>
         </div>
         <div style="text-align:right">
           <div style="font-family:var(--font-mono);font-size:13px">${fmtPrice(c.price)}</div>
@@ -784,6 +890,7 @@ function renderHype() {
       <div style="display:flex;gap:6px;margin-top:8px">
         <a href="${c.pairUrl}" target="_blank" class="btn btn-chart">📊 CHART</a>
         <a href="https://phantom.app/ul/v1/browse?ref=${encodeURIComponent(c.pairUrl)}" class="btn btn-buy">👻 BUY</a>
+        <div class="btn btn-track" onclick='trackCoin(${JSON.stringify(c).replace(/'/g, "&#39;")})'>📌 TRACK</div>
       </div>
     </div>`;
   }).join('');
@@ -1015,16 +1122,11 @@ function startAutoRefresh() {
   refreshTimer = setInterval(loadData, 60000);
 }
 
-// Init
-loadData();
-renderTrades();
-startAutoRefresh();
-  if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sol-sniper/sw.js').then(reg => {
-    Notification.requestPermission().then(perm => {
-      if (perm === 'granted') console.log('Notifications enabled');
-    });
-  });
+// Init — only run if already unlocked
+if (sessionStorage.getItem(PIN_KEY) === 'yes') {
+  loadData();
+  renderTrades();
+  startAutoRefresh();
 }
 </script>
 </body>
