@@ -2,1131 +2,1065 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SOL SNIPER</title>
-<script>
-// PIN PROTECTION — change this to your PIN
-const CORRECT_PIN = '2661';
-const PIN_KEY = 'sniper_unlocked';
-
-function checkPin() {
-  if (sessionStorage.getItem(PIN_KEY) === 'yes') return;
-  document.getElementById('pin-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
-function updateDots(len) {
-  document.querySelectorAll('.pin-dot').forEach((d,i) => {
-    d.style.background = i < len ? '#00ff88' : 'transparent';
-  });
-}
-function pinKey(v) {
-  const disp = document.getElementById('pin-display');
-  if (v === 'DEL') { disp.textContent = disp.textContent.slice(0,-1); updateDots(disp.textContent.length); return; }
-  if (disp.textContent.length >= 6) return;
-  disp.textContent += v;
-  updateDots(disp.textContent.length);
-  if (disp.textContent.length >= CORRECT_PIN.length) {
-    if (disp.textContent === CORRECT_PIN) {
-      sessionStorage.setItem(PIN_KEY, 'yes');
-      document.getElementById('pin-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      loadData(); renderTrades(); startAutoRefresh();
-    } else {
-      document.getElementById('pin-error').style.display = 'block';
-      setTimeout(() => { disp.textContent = ''; document.getElementById('pin-error').style.display = 'none'; }, 900);
-    }
-  }
-}
-window.addEventListener('DOMContentLoaded', checkPin);
-</script>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-#pin-screen {
-  display: none; position: fixed; inset: 0;
-  background: #050508; z-index: 99999;
-  flex-direction: column; align-items: center; justify-content: center;
-  font-family: 'Share Tech Mono', monospace;
-}
-.pin-logo { font-size: 22px; letter-spacing: 4px; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,.5); margin-bottom: 6px; }
-.pin-logo span { color: #ff3366; }
-.pin-sub { font-size: 10px; color: #555570; letter-spacing: 2px; margin-bottom: 32px; }
-.pin-dots { display: flex; gap: 12px; margin-bottom: 8px; }
-.pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #1a1a2e; background: transparent; transition: background .15s; }
-#pin-display-wrap { margin-bottom: 32px; }
-#pin-error { color: #ff3366; font-size: 10px; text-align: center; letter-spacing: 1px; display: none; margin-top: 4px; }
-.pin-grid { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
-.pin-btn {
-  height: 70px; border-radius: 12px;
-  background: #0e0e16; border: 1px solid #1a1a2e;
-  color: #e0e0e0; font-family: 'Share Tech Mono', monospace;
-  font-size: 20px; cursor: pointer; transition: all .1s;
-  display: flex; align-items: center; justify-content: center;
-}
-.pin-btn:active { background: rgba(0,255,136,.15); border-color: #00ff88; color: #00ff88; transform: scale(.93); }
-.pin-btn.del { color: #ff3366; font-size: 14px; }
-</style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
-
   :root {
-    --bg: #050508;
-    --bg2: #0a0a10;
-    --panel: #0e0e16;
-    --border: #1a1a2e;
-    --accent: #00ff88;
-    --accent2: #ff3366;
-    --accent3: #ffaa00;
-    --accent4: #00aaff;
-    --text: #e0e0e0;
-    --muted: #555570;
-    --danger: #ff3366;
-    --safe: #00ff88;
-    --warn: #ffaa00;
-    --font-mono: 'Share Tech Mono', monospace;
-    --font-ui: 'Rajdhani', sans-serif;
+    --bg: #060608;
+    --card: #0d0d14;
+    --border: #1c1c2e;
+    --green: #00e87a;
+    --red: #ff2d55;
+    --yellow: #ffcc00;
+    --blue: #00aaff;
+    --muted: #4a4a6a;
+    --text: #e8e8f0;
+    --sub: #7a7a9a;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  html, body {
-    height: 100%; width: 100%;
+  body {
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-ui);
-    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
-  /* SCANLINE overlay */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.01) 2px, rgba(0,255,136,0.01) 4px);
-    pointer-events: none; z-index: 9999;
-  }
-
-  #app {
+  /* PIN SCREEN */
+  #pin-screen {
+    position: fixed; inset: 0; background: var(--bg);
     display: flex; flex-direction: column;
-    height: 100dvh; max-width: 480px; margin: 0 auto;
-    position: relative;
+    align-items: center; justify-content: center;
+    z-index: 9999; gap: 32px;
   }
+  .pin-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--green), #00ffcc);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .pin-sub { color: var(--sub); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .pin-dots { display: flex; gap: 16px; }
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--muted); background: transparent;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled { background: var(--green); border-color: var(--green); }
+  .pin-dot.shake { animation: shake 0.3s; }
+  .pin-pad {
+    display: grid; grid-template-columns: repeat(3, 72px);
+    gap: 12px;
+  }
+  .pin-btn {
+    height: 72px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; cursor: pointer; transition: all 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin-btn:active { transform: scale(0.92); background: var(--border); }
+  .pin-btn.del { font-family: 'DM Sans', sans-serif; font-size: 20px; }
+  .pin-error { color: var(--red); font-size: 13px; letter-spacing: 1px; height: 20px; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* MAIN APP */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
 
   /* HEADER */
-  #header {
+  .header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px 8px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 100;
   }
-  .logo {
-    font-family: var(--font-mono);
-    font-size: 18px; letter-spacing: 3px;
-    color: var(--accent);
-    text-shadow: 0 0 20px rgba(0,255,136,0.5);
+  .header-logo {
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px;
+    letter-spacing: 4px; color: var(--green);
   }
-  .logo span { color: var(--accent2); }
-  #budget-badge {
-    background: var(--panel);
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    cursor: pointer;
-    transition: all .2s;
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .budget-badge {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px 12px;
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    color: var(--green); cursor: pointer;
   }
-  #budget-badge:active { transform: scale(.95); }
-  #refresh-btn {
-    background: none; border: 1px solid var(--border);
-    border-radius: 6px; padding: 4px 8px;
-    color: var(--muted); cursor: pointer; font-size: 14px;
-    transition: all .2s; margin-left: 8px;
+  .refresh-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--sub); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all 0.2s;
   }
-  #refresh-btn.spinning { animation: spin 1s linear infinite; }
+  .refresh-btn:active { transform: rotate(180deg); color: var(--green); }
+  .refresh-btn.spinning { animation: spin 0.8s linear; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* STATUS BAR */
-  #status-bar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 4px 16px;
-    background: var(--bg2);
-    font-family: var(--font-mono); font-size: 10px;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-  .status-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--muted);
-    animation: pulse 2s infinite;
-  }
-  .status-dot.live { background: var(--accent); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  #last-update { margin-left: auto; }
-
-  /* TABS */
-  #tabs {
-    display: flex;
-    background: var(--bg2);
+  /* NAV */
+  .nav {
+    display: flex; gap: 4px; padding: 12px 16px;
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
   }
-  .tab {
-    flex: 1; padding: 10px 4px;
-    text-align: center;
-    font-family: var(--font-mono); font-size: 11px;
-    color: var(--muted); cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all .2s; letter-spacing: 1px;
+  .nav-btn {
+    flex: 1; padding: 8px 4px; border-radius: 10px;
+    background: transparent; border: none;
+    color: var(--sub); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.5px; transition: all 0.15s;
+    text-transform: uppercase;
   }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-btn.active { background: var(--card); color: var(--green); border: 1px solid var(--border); }
 
   /* CONTENT */
-  #content {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-  #content::-webkit-scrollbar { width: 3px; }
-  #content::-webkit-scrollbar-track { background: var(--bg); }
-  #content::-webkit-scrollbar-thumb { background: var(--border); }
+  .content { padding: 16px; flex: 1; }
+  .tab { display: none; }
+  .tab.active { display: block; }
 
-  /* PANELS */
-  .panel { display: none; padding: 12px 16px; }
-  .panel.active { display: block; }
-
-  /* COIN CARD */
-  .coin-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-  .coin-card:active { border-color: var(--accent); }
-  .coin-header {
+  /* STATUS BAR */
+  .status-bar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px 8px;
+    margin-bottom: 16px;
   }
-  .coin-name-wrap { display: flex; align-items: center; gap: 8px; }
-  .coin-icon {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent4));
+  .status-label {
+    font-size: 11px; color: var(--sub); letter-spacing: 1px; text-transform: uppercase;
+  }
+  .live-dot {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--green);
+  }
+  .live-dot::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* FILTER TABS */
+  .filter-row {
+    display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--sub); font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .filter-chip.active { background: var(--green); border-color: var(--green); color: #000; }
+
+  /* COIN CARDS */
+  .coin-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .coin-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px;
+    transition: border-color 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .coin-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--muted); border-radius: 3px 0 0 3px;
+  }
+  .coin-card.fire::before { background: var(--green); }
+  .coin-card.hot::before { background: var(--yellow); }
+  .coin-card.watch::before { background: var(--blue); }
+
+  .coin-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .coin-name-block {}
+  .coin-symbol { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .coin-name { font-size: 11px; color: var(--sub); margin-top: 1px; }
+
+  .score-circle {
+    width: 48px; height: 48px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 12px; color: var(--bg);
-    flex-shrink: 0;
+    flex-direction: column;
+    border: 2px solid var(--border); font-family: 'Space Mono', monospace;
   }
-  .coin-name { font-size: 15px; font-weight: 700; color: var(--text); }
-  .coin-ticker { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
-  .coin-price {
-    text-align: right;
-    font-family: var(--font-mono); font-size: 13px; color: var(--text);
-  }
-  .coin-change { font-size: 11px; }
-  .green { color: var(--safe); }
-  .red { color: var(--danger); }
-  .orange { color: var(--warn); }
+  .score-circle .score-num { font-size: 16px; font-weight: 700; line-height: 1; }
+  .score-circle .score-lbl { font-size: 8px; color: var(--sub); letter-spacing: 0.5px; }
+  .score-circle.fire { border-color: var(--green); }
+  .score-circle.fire .score-num { color: var(--green); }
+  .score-circle.hot { border-color: var(--yellow); }
+  .score-circle.hot .score-num { color: var(--yellow); }
+  .score-circle.watch { border-color: var(--blue); }
+  .score-circle.watch .score-num { color: var(--blue); }
 
   .coin-stats {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 1px; background: var(--border);
-    border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; margin-bottom: 12px;
   }
-  .stat {
-    background: var(--panel);
-    padding: 6px 10px;
-    text-align: center;
+  .stat-block { }
+  .stat-val {
+    font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700;
   }
-  .stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
-  .stat-value { font-family: var(--font-mono); font-size: 11px; color: var(--text); margin-top: 1px; }
+  .stat-val.up { color: var(--green); }
+  .stat-val.down { color: var(--red); }
+  .stat-lbl { font-size: 10px; color: var(--sub); margin-top: 1px; letter-spacing: 0.5px; }
 
-  .coin-actions {
-    display: flex; gap: 6px;
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-  }
-  .btn {
-    flex: 1; padding: 7px 4px;
-    border-radius: 6px; border: none;
-    font-family: var(--font-mono); font-size: 10px;
-    cursor: pointer; transition: all .15s;
-    text-decoration: none; text-align: center;
-    display: block;
-  }
-  .btn:active { transform: scale(.95); }
-  .btn-buy { background: rgba(0,255,136,.15); color: var(--safe); border: 1px solid rgba(0,255,136,.3); }
-  .btn-chart { background: rgba(0,170,255,.15); color: var(--accent4); border: 1px solid rgba(0,170,255,.3); }
-  .btn-track { background: rgba(255,170,0,.15); color: var(--warn); border: 1px solid rgba(255,170,0,.3); }
-
-  /* RUG SCORE */
-  .rug-bar-wrap { padding: 6px 12px 8px; }
-  .rug-label { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--muted); margin-bottom: 3px; }
-  .rug-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .rug-fill { height: 100%; border-radius: 2px; transition: width .5s; }
-  .rug-safe { background: var(--safe); }
-  .rug-medium { background: var(--warn); }
-  .rug-danger { background: var(--danger); }
-
-  /* BUDGET MODAL */
-  #budget-modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.85); z-index: 1000;
-    align-items: flex-end; justify-content: center;
-  }
-  #budget-modal.open { display: flex; }
-  .modal-inner {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px 16px 0 0;
-    padding: 20px 20px 36px;
-    width: 100%; max-width: 480px;
-    animation: slideup .25s ease;
-  }
-  @keyframes slideup { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .modal-title {
-    font-family: var(--font-mono); font-size: 14px;
-    color: var(--accent); letter-spacing: 2px;
-    margin-bottom: 16px; text-align: center;
-  }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 5px; }
-  .field input, .field select {
-    width: 100%; background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px;
-    color: var(--text); font-family: var(--font-mono); font-size: 13px;
-    outline: none;
-  }
-  .field input:focus, .field select:focus { border-color: var(--accent); }
-  .risk-btns { display: flex; gap: 8px; }
-  .risk-btn {
-    flex: 1; padding: 8px;
-    border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg2); color: var(--muted);
-    font-family: var(--font-mono); font-size: 11px;
-    cursor: pointer; transition: all .2s; text-align: center;
-  }
-  .risk-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,255,136,.1); }
-  #budget-summary {
-    background: var(--bg2); border-radius: 8px; padding: 12px;
-    margin-top: 14px; font-family: var(--font-mono); font-size: 11px;
-    border: 1px solid var(--border);
-  }
-  .budget-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .budget-row:last-child { margin-bottom: 0; }
-  .budget-row .lbl { color: var(--muted); }
-  .budget-row .val { color: var(--accent); }
-  .btn-save {
-    width: 100%; padding: 12px;
-    background: var(--accent); color: var(--bg);
-    border: none; border-radius: 8px;
-    font-family: var(--font-mono); font-size: 13px;
-    font-weight: 700; cursor: pointer; margin-top: 14px;
-    letter-spacing: 2px;
-  }
-  .btn-close-modal {
-    width: 100%; padding: 10px;
-    background: none; border: 1px solid var(--border);
-    color: var(--muted); border-radius: 8px;
-    font-family: var(--font-mono); font-size: 11px;
-    cursor: pointer; margin-top: 8px;
-  }
-
-  /* TRACK PANEL */
-  .track-form {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px; margin-bottom: 12px;
-  }
-  .track-form-title { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-bottom: 10px; letter-spacing: 1px; }
-  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .form-row .field { flex: 1; margin-bottom: 0; }
-  .btn-add {
-    width: 100%; padding: 10px;
-    background: rgba(0,255,136,.15); border: 1px solid rgba(0,255,136,.3);
-    color: var(--safe); border-radius: 8px;
-    font-family: var(--font-mono); font-size: 11px;
-    cursor: pointer; letter-spacing: 1px;
-  }
-
-  /* TRADE CARD */
-  .trade-card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; margin-bottom: 10px; overflow: hidden;
-  }
-  .trade-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 12px;
-  }
-  .trade-name { font-size: 14px; font-weight: 700; }
-  .trade-pnl { font-family: var(--font-mono); font-size: 13px; }
-  .exit-plan {
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-    font-family: var(--font-mono); font-size: 10px;
-  }
-  .exit-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .exit-row:last-child { margin-bottom: 0; }
-  .exit-label { color: var(--muted); }
-
-  /* EXIT PANEL */
-  .exit-section { margin-bottom: 16px; }
-  .section-title {
-    font-family: var(--font-mono); font-size: 11px;
-    color: var(--accent); letter-spacing: 2px;
-    margin-bottom: 8px; padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
-  }
-  .playbook-item {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;
-  }
-  .playbook-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
-  .playbook-desc { font-family: var(--font-mono); font-size: 10px; color: var(--muted); line-height: 1.4; }
-
-  /* HYPE PANEL */
-  .signal-card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px; margin-bottom: 8px;
-  }
-  .signal-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .signal-name { font-size: 14px; font-weight: 700; }
-  .signal-source { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
-  .signal-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .signal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
   .tag {
-    padding: 2px 7px; border-radius: 4px;
-    font-family: var(--font-mono); font-size: 9px;
+    padding: 3px 8px; border-radius: 6px; font-size: 10px;
+    font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
   }
-  .tag-pump { background: rgba(255,51,102,.2); color: var(--danger); border: 1px solid rgba(255,51,102,.3); }
-  .tag-whale { background: rgba(0,170,255,.2); color: var(--accent4); border: 1px solid rgba(0,170,255,.3); }
-  .tag-tg { background: rgba(0,255,136,.2); color: var(--safe); border: 1px solid rgba(0,255,136,.3); }
-  .tag-early { background: rgba(255,170,0,.2); color: var(--warn); border: 1px solid rgba(255,170,0,.3); }
-  .tag-new { background: rgba(160,80,255,.2); color: #cc88ff; border: 1px solid rgba(160,80,255,.3); }
+  .tag.green { background: rgba(0,232,122,0.15); color: var(--green); }
+  .tag.yellow { background: rgba(255,204,0,0.15); color: var(--yellow); }
+  .tag.red { background: rgba(255,45,85,0.15); color: var(--red); }
+  .tag.blue { background: rgba(0,170,255,0.15); color: var(--blue); }
 
-  /* EARLY BANNER */
-  .early-banner {
-    background: rgba(255,51,102,.1); border: 1px solid rgba(255,51,102,.4);
-    border-radius: 6px; padding: 5px 10px; margin-bottom: 6px;
-    font-family: var(--font-mono); font-size: 9px; color: var(--danger);
-    display: flex; align-items: center; gap: 6px;
+  /* RUG BAR */
+  .rug-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .rug-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+  .rug-bar-fill { height: 4px; border-radius: 2px; transition: width 0.5s; }
+  .rug-lbl { font-size: 10px; color: var(--sub); width: 70px; text-align: right; }
+
+  .coin-actions { display: flex; gap: 8px; }
+  .btn-buy {
+    flex: 1; padding: 10px; border-radius: 10px;
+    background: var(--green); border: none;
+    color: #000; font-family: 'DM Sans', sans-serif;
+    font-weight: 700; font-size: 13px; cursor: pointer;
+    letter-spacing: 0.5px;
   }
+  .btn-buy:active { opacity: 0.8; }
+  .btn-track {
+    padding: 10px 16px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .btn-chart {
+    padding: 10px 16px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--sub); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center;
+  }
+
+  /* SUGGESTED SIZE */
+  .size-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 8px;
+    background: rgba(0,232,122,0.1); border: 1px solid rgba(0,232,122,0.2);
+    font-family: 'Space Mono', monospace; font-size: 11px; color: var(--green);
+    margin-bottom: 10px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--sub);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
 
   /* LOADING */
-  .loading {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 40px;
-    color: var(--muted); font-family: var(--font-mono); font-size: 11px;
+  .loading-state {
+    text-align: center; padding: 60px 20px;
   }
-  .loading-spinner {
-    width: 32px; height: 32px; border: 2px solid var(--border);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 1s linear infinite; margin-bottom: 12px;
+  .loader {
+    width: 40px; height: 40px; border: 3px solid var(--border);
+    border-top-color: var(--green); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
   }
+  .loading-state p { color: var(--sub); font-size: 13px; }
 
-  /* EMPTY */
-  .empty {
-    text-align: center; padding: 40px 20px;
-    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  /* TRACK TAB */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    letter-spacing: 2px; margin-bottom: 16px; color: var(--sub);
   }
-
-  /* FILTER BAR */
-  .filter-bar {
-    display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto;
-    padding-bottom: 4px;
+  .trade-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
   }
-  .filter-bar::-webkit-scrollbar { display: none; }
-  .filter-chip {
-    flex-shrink: 0; padding: 5px 10px;
-    border-radius: 20px; border: 1px solid var(--border);
-    background: var(--panel); color: var(--muted);
-    font-family: var(--font-mono); font-size: 9px;
-    cursor: pointer; transition: all .2s;
+  .trade-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
   }
-  .filter-chip.active {
-    border-color: var(--accent); color: var(--accent);
-    background: rgba(0,255,136,.1);
+  .trade-symbol { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .trade-pnl {
+    font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700;
   }
-
-  /* NETWORK ERROR */
-  .net-error {
-    background: rgba(255,51,102,.1); border: 1px solid rgba(255,51,102,.3);
-    border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
-    font-family: var(--font-mono); font-size: 10px; color: var(--danger);
+  .trade-pnl.profit { color: var(--green); }
+  .trade-pnl.loss { color: var(--red); }
+  .exit-levels {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+    margin-bottom: 12px;
+  }
+  .exit-level {
+    background: var(--bg); border-radius: 8px; padding: 8px;
     text-align: center;
+  }
+  .exit-level .mult { font-family: 'Bebas Neue', sans-serif; font-size: 18px; }
+  .exit-level .mult.x2 { color: var(--blue); }
+  .exit-level .mult.x5 { color: var(--yellow); }
+  .exit-level .mult.x10 { color: var(--green); }
+  .exit-level .price { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--sub); }
+  .stop-loss {
+    background: rgba(255,45,85,0.08); border: 1px solid rgba(255,45,85,0.2);
+    border-radius: 8px; padding: 8px 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: var(--red); margin-bottom: 12px;
+  }
+  .del-trade-btn {
+    width: 100%; padding: 8px; border-radius: 8px;
+    background: transparent; border: 1px solid rgba(255,45,85,0.2);
+    color: var(--red); font-size: 12px; cursor: pointer;
+  }
+
+  /* ADD TRADE */
+  .add-trade-form {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+  }
+  .form-row { margin-bottom: 12px; }
+  .form-label { font-size: 11px; color: var(--sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 14px;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--green); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-add {
+    width: 100%; padding: 12px; border-radius: 12px;
+    background: var(--green); border: none;
+    color: #000; font-weight: 700; font-size: 14px;
+    cursor: pointer; letter-spacing: 0.5px;
+  }
+
+  /* BUDGET MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px 24px 0 0; padding: 24px 20px 36px;
+    width: 100%; max-width: 500px;
+    transform: translateY(40px); transition: transform 0.25s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+    letter-spacing: 3px; margin-bottom: 20px;
+  }
+  .modal-close {
+    float: right; background: var(--border); border: none;
+    color: var(--text); width: 28px; height: 28px; border-radius: 8px;
+    cursor: pointer; font-size: 14px;
+  }
+  .budget-result {
+    background: var(--bg); border-radius: 10px; padding: 12px;
+    margin-top: 16px; font-family: 'Space Mono', monospace; font-size: 12px;
+    line-height: 2; color: var(--sub);
+  }
+  .budget-result span { color: var(--green); }
+
+  /* COUNTDOWN */
+  .countdown-bar {
+    height: 2px; background: var(--border);
+    position: relative; margin-bottom: 16px; border-radius: 1px;
+    overflow: hidden;
+  }
+  .countdown-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--green); border-radius: 1px;
+    transition: width 1s linear;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .error-banner {
+    background: rgba(255,45,85,0.1); border: 1px solid rgba(255,45,85,0.2);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 13px; color: var(--red);
   }
 </style>
 </head>
 <body>
+
 <!-- PIN SCREEN -->
 <div id="pin-screen">
-  <div class="pin-logo">SOL<span>⚡</span>SNIPER</div>
-  <div class="pin-sub">// ENTER ACCESS CODE</div>
-  <div id="pin-display-wrap">
-    <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot"></div><div class="pin-dot"></div>
-      <div class="pin-dot"></div><div class="pin-dot"></div>
-    </div>
-    <div id="pin-display" style="display:none"></div>
-    <div id="pin-error">⚠ WRONG PIN</div>
+  <div class="pin-logo">SOL SNIPER</div>
+  <div class="pin-sub">Enter PIN to access</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
   </div>
-  <div class="pin-grid">
-    <div class="pin-btn" onclick="pinKey('1')">1</div>
-    <div class="pin-btn" onclick="pinKey('2')">2</div>
-    <div class="pin-btn" onclick="pinKey('3')">3</div>
-    <div class="pin-btn" onclick="pinKey('4')">4</div>
-    <div class="pin-btn" onclick="pinKey('5')">5</div>
-    <div class="pin-btn" onclick="pinKey('6')">6</div>
-    <div class="pin-btn" onclick="pinKey('7')">7</div>
-    <div class="pin-btn" onclick="pinKey('8')">8</div>
-    <div class="pin-btn" onclick="pinKey('9')">9</div>
-    <div class="pin-btn" onclick="pinKey('0')" style="grid-column:2">0</div>
-    <div class="pin-btn del" onclick="pinKey('DEL')">⌫</div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinInput('1')">1</button>
+    <button class="pin-btn" onclick="pinInput('2')">2</button>
+    <button class="pin-btn" onclick="pinInput('3')">3</button>
+    <button class="pin-btn" onclick="pinInput('4')">4</button>
+    <button class="pin-btn" onclick="pinInput('5')">5</button>
+    <button class="pin-btn" onclick="pinInput('6')">6</button>
+    <button class="pin-btn" onclick="pinInput('7')">7</button>
+    <button class="pin-btn" onclick="pinInput('8')">8</button>
+    <button class="pin-btn" onclick="pinInput('9')">9</button>
+    <button class="pin-btn" onclick="pinInput('0')" style="grid-column:2">0</button>
+    <button class="pin-btn del" onclick="pinDelete()">⌫</button>
   </div>
+  <div class="pin-error" id="pin-error"></div>
 </div>
 
+<!-- MAIN APP -->
 <div id="app">
-
-  <!-- HEADER -->
-  <div id="header">
-    <div class="logo">SOL<span>⚡</span>SNIPER</div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div id="budget-badge" onclick="openBudget()">💰 SET BUDGET</div>
-      <button id="refresh-btn" onclick="refreshAll()">↻</button>
+  <div class="header">
+    <div class="header-logo">⚡ SNIPER</div>
+    <div class="header-right">
+      <div class="budget-badge" onclick="openBudget()" id="budget-badge">SET BUDGET</div>
+      <button class="refresh-btn" onclick="refreshAll()" id="refresh-btn" title="Refresh">↻</button>
     </div>
   </div>
 
-  <!-- STATUS -->
-  <div id="status-bar">
-    <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">Connecting...</span>
-    <span id="last-update"></span>
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('fire')" id="tab-fire">🔥 Fire</button>
+    <button class="nav-btn" onclick="switchTab('all')" id="tab-all">🪙 All</button>
+    <button class="nav-btn" onclick="switchTab('track')" id="tab-track">📊 Track</button>
+    <button class="nav-btn" onclick="switchTab('exits')" id="tab-exits">🎯 Exits</button>
   </div>
 
-  <!-- TABS -->
-  <div id="tabs">
-    <div class="tab active" data-tab="hype">🔥 HYPE</div>
-    <div class="tab" data-tab="coins">🪙 COINS</div>
-    <div class="tab" data-tab="track">📊 TRACK</div>
-    <div class="tab" data-tab="exit">🎯 EXIT</div>
-  </div>
+  <div class="content">
 
-  <!-- CONTENT -->
-  <div id="content">
-
-    <!-- HYPE TAB -->
-    <div id="tab-hype" class="panel active">
-      <div id="hype-content">
-        <div class="loading"><div class="loading-spinner"></div>Scanning signals...</div>
+    <!-- FIRE TAB - only high score coins -->
+    <div class="tab active" id="tab-content-fire">
+      <div class="status-bar">
+        <div class="status-label" id="fire-count">Top picks only</div>
+        <div class="live-dot">LIVE</div>
       </div>
+      <div class="countdown-bar"><div class="countdown-fill" id="countdown-fill" style="width:100%"></div></div>
+      <div id="fire-error"></div>
+      <div id="fire-list"><div class="loading-state"><div class="loader"></div><p>Scanning for opportunities…</p></div></div>
     </div>
 
-    <!-- COINS TAB -->
-    <div id="tab-coins" class="panel">
-      <div class="filter-bar">
-        <div class="filter-chip active" data-filter="all">ALL</div>
-        <div class="filter-chip" data-filter="hot">🔥 HOT</div>
-        <div class="filter-chip" data-filter="new">🆕 NEW</div>
-        <div class="filter-chip" data-filter="safe">✅ SAFE</div>
-        <div class="filter-chip" data-filter="risky">⚠️ RISKY</div>
+    <!-- ALL COINS TAB -->
+    <div class="tab" id="tab-content-all">
+      <div class="status-bar">
+        <div class="status-label" id="all-count">All Solana coins</div>
+        <div class="live-dot">LIVE</div>
       </div>
-      <div id="coins-content">
-        <div class="loading"><div class="loading-spinner"></div>Loading live coins...</div>
+      <div class="filter-row">
+        <div class="filter-chip active" onclick="setFilter(this,'all')">All</div>
+        <div class="filter-chip" onclick="setFilter(this,'safe')">✅ Safe</div>
+        <div class="filter-chip" onclick="setFilter(this,'new')">🆕 New</div>
+        <div class="filter-chip" onclick="setFilter(this,'pump')">🚀 Pump</div>
+        <div class="filter-chip" onclick="setFilter(this,'risky')">⚠️ Risky</div>
       </div>
+      <div id="all-list"><div class="loading-state"><div class="loader"></div><p>Loading coins…</p></div></div>
     </div>
 
     <!-- TRACK TAB -->
-    <div id="tab-track" class="panel">
-      <div class="track-form">
-        <div class="track-form-title">// LOG NEW TRADE</div>
+    <div class="tab" id="tab-content-track">
+      <div class="section-title">Log a Trade</div>
+      <div class="add-trade-form">
         <div class="form-row">
-          <div class="field"><label>TOKEN NAME</label><input id="t-name" placeholder="e.g. BONK" /></div>
-          <div class="field"><label>CONTRACT</label><input id="t-ca" placeholder="paste CA" /></div>
+          <div class="form-label">Token Symbol</div>
+          <input class="form-input" id="t-symbol" placeholder="e.g. BONK" />
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-label">Entry Price ($)</div>
+            <input class="form-input" id="t-entry" type="number" placeholder="0.00001" />
+          </div>
+          <div class="form-row">
+            <div class="form-label">Amount Invested ($)</div>
+            <input class="form-input" id="t-amount" type="number" placeholder="50" />
+          </div>
         </div>
         <div class="form-row">
-          <div class="field"><label>ENTRY PRICE ($)</label><input id="t-entry" type="number" placeholder="0.0000001" /></div>
-          <div class="field"><label>AMOUNT (SOL)</label><input id="t-amount" type="number" placeholder="0.1" /></div>
+          <div class="form-label">Contract Address (optional)</div>
+          <input class="form-input" id="t-ca" placeholder="Paste CA..." />
         </div>
-        <button class="btn-add" onclick="addTrade()">+ ADD TRADE</button>
+        <button class="btn-add" onclick="addTrade()">+ Log Trade</button>
       </div>
-      <div id="trades-list"></div>
+      <div class="section-title">Open Positions</div>
+      <div id="trade-list"></div>
     </div>
 
-    <!-- EXIT TAB -->
-    <div id="tab-exit" class="panel">
-      <div class="exit-section">
-        <div class="section-title">// EXIT PLAYBOOK</div>
-        <div class="playbook-item">
-          <div class="playbook-title green">🎯 Stage 1 — Take 30% at 2x</div>
-          <div class="playbook-desc">Recover most of your initial capital. You're now playing with house money for the rest.</div>
-        </div>
-        <div class="playbook-item">
-          <div class="playbook-title green">🎯 Stage 2 — Take 40% at 5x</div>
-          <div class="playbook-desc">Lock in the big win. Leave 30% to ride for the 10x+ moon scenario.</div>
-        </div>
-        <div class="playbook-item">
-          <div class="playbook-title orange">⚡ Stage 3 — Ride remaining 30%</div>
-          <div class="playbook-desc">Set a trailing stop at -50% from ATH. If it bleeds back, you already won.</div>
-        </div>
-        <div class="playbook-item">
-          <div class="playbook-title red">🛑 Stop Loss — Cut at -30%</div>
-          <div class="playbook-desc">Non-negotiable. If price drops 30% from entry, exit immediately. No exceptions.</div>
+    <!-- EXITS TAB -->
+    <div class="tab" id="tab-content-exits">
+      <div class="section-title">Exit Playbook</div>
+      <div class="trade-card" style="border-color: rgba(0,232,122,0.3)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:12px;color:var(--green)">THE GOLDEN RULE</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--sub)">
+          • <span style="color:var(--text)">Take 25% off at 2x</span> — recover part of your investment<br>
+          • <span style="color:var(--text)">Take 25% off at 5x</span> — let the rest ride free<br>
+          • <span style="color:var(--text)">Let 50% ride to 10x+</span> — this is where life changes<br>
+          • <span style="color:var(--text)">Always set a stop loss</span> — max 30% below entry<br>
+          • <span style="color:var(--text)">Never ape your entire stack</span> — 5-10% per trade max
         </div>
       </div>
-
-      <div class="exit-section">
-        <div class="section-title">// RUG SIGNALS — DUMP IMMEDIATELY</div>
-        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
-          <div class="playbook-title red">🚨 Dev wallet dumps</div>
-          <div class="playbook-desc">If top wallet sells >5% of supply in one tx — EXIT NOW, no questions.</div>
-        </div>
-        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
-          <div class="playbook-title red">🚨 LP removed</div>
-          <div class="playbook-desc">If liquidity drops suddenly — classic rug. Exit before you're holding bags.</div>
-        </div>
-        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
-          <div class="playbook-title red">🚨 Telegram goes silent</div>
-          <div class="playbook-desc">Dev ghosts the community = exit signal. Real projects communicate.</div>
-        </div>
-        <div class="playbook-item" style="border-color:rgba(255,170,0,.4)">
-          <div class="playbook-title orange">⚠️ Volume dries up fast</div>
-          <div class="playbook-desc">If 24h volume drops >70% in 2 hours, momentum is dead. Take profits or cut.</div>
+      <div class="section-title">Rug Dump Signals</div>
+      <div class="trade-card">
+        <div style="font-size:13px;line-height:2;color:var(--sub)">
+          🚨 <span style="color:var(--red)">Dev sells</span> — wallet drains in minutes<br>
+          🚨 <span style="color:var(--red)">LP pulled</span> — can't sell, instant 0<br>
+          🚨 <span style="color:var(--red)">Telegram goes quiet</span> — they already left<br>
+          🚨 <span style="color:var(--red)">Volume dies suddenly</span> — exit before it crashes<br>
+          🚨 <span style="color:var(--red)">Top 10 wallets dump</span> — follow the smart money out<br>
+          ✅ <span style="color:var(--green)">Renounced contract</span> — dev can't rug<br>
+          ✅ <span style="color:var(--green)">Locked LP</span> — liquidity can't be pulled<br>
+          ✅ <span style="color:var(--green)">Low top holder %</span> — distributed = safer
         </div>
       </div>
-
-      <div class="exit-section">
-        <div class="section-title">// SET DEXSCREENER ALERTS</div>
-        <div id="dex-alerts-list">
-          <div class="empty">Log trades in TRACK tab to generate alert links</div>
+      <div class="section-title">Your Trades — Exit Plans</div>
+      <div id="exit-trade-list"></div>
+      <div style="margin-top:16px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Price Alerts</div>
+        <div style="font-size:13px;color:var(--sub);line-height:1.7">
+          Use <a href="https://dexscreener.com" target="_blank" style="color:var(--green)">DEXScreener</a> for free background price alerts. Search your coin → tap the bell icon → set your target price.
         </div>
       </div>
     </div>
-
-  </div><!-- /content -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <!-- BUDGET MODAL -->
-<div id="budget-modal">
-  <div class="modal-inner">
-    <div class="modal-title">// BUDGET ENGINE</div>
-    <div class="field">
-      <label>BANKROLL (SOL)</label>
-      <input id="b-bankroll" type="number" placeholder="e.g. 1.0" step="0.1" />
+<div class="modal-overlay" id="budget-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeBudget()">✕</button>
+    <div class="modal-title">💰 Budget Engine</div>
+    <div class="form-row">
+      <div class="form-label">Total Bankroll ($)</div>
+      <input class="form-input" id="bankroll" type="number" placeholder="1000" oninput="calcBudget()" />
     </div>
-    <div class="field">
-      <label>RISK PER TRADE</label>
-      <div class="risk-btns">
-        <div class="risk-btn" data-risk="5" onclick="setRisk(5)">5% SAFE</div>
-        <div class="risk-btn active" data-risk="10" onclick="setRisk(10)">10% MED</div>
-        <div class="risk-btn" data-risk="20" onclick="setRisk(20)">20% DEGEN</div>
-      </div>
+    <div class="form-row">
+      <div class="form-label">Risk Per Trade (%)</div>
+      <input class="form-input" id="risk-pct" type="number" placeholder="5" value="5" oninput="calcBudget()" />
     </div>
-    <div class="field">
-      <label>MAX OPEN POSITIONS</label>
-      <input id="b-positions" type="number" placeholder="5" value="5" min="1" max="20" />
+    <div class="budget-result" id="budget-result">
+      Enter your bankroll to see position sizing.
     </div>
-    <div id="budget-summary">
-      <div class="budget-row"><span class="lbl">Per trade (safe)</span><span class="val" id="bs-safe">—</span></div>
-      <div class="budget-row"><span class="lbl">Per trade (medium)</span><span class="val" id="bs-med">—</span></div>
-      <div class="budget-row"><span class="lbl">Per trade (degen)</span><span class="val" id="bs-degen">—</span></div>
-      <div class="budget-row"><span class="lbl">Max deployed</span><span class="val" id="bs-max">—</span></div>
-      <div class="budget-row"><span class="lbl">Reserve</span><span class="val" id="bs-reserve">—</span></div>
-    </div>
-    <button class="btn-save" onclick="saveBudget()">LOCK IN</button>
-    <button class="btn-close-modal" onclick="closeBudget()">CLOSE</button>
+    <br>
+    <button class="btn-add" onclick="saveBudget()">Save Budget</button>
   </div>
 </div>
 
 <script>
-// =============================================
-// STATE
-// =============================================
-let budget = { bankroll: 0, risk: 10, maxPositions: 5 };
-let coins = [];
-let trades = JSON.parse(localStorage.getItem('sniper_trades') || '[]');
-let activeFilter = 'all';
-let refreshTimer = null;
+const CORRECT_PIN = '2661';
+let pinEntry = '';
 
-// =============================================
-// TABS
-// =============================================
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
-    if (t.dataset.tab === 'track') renderTrades();
-    if (t.dataset.tab === 'exit') renderExitAlerts();
-  });
-});
-
-// =============================================
-// FILTER CHIPS
-// =============================================
-document.querySelectorAll('.filter-chip').forEach(c => {
-  c.addEventListener('click', () => {
-    document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
-    c.classList.add('active');
-    activeFilter = c.dataset.filter;
-    renderCoins();
-  });
-});
-
-// =============================================
-// STATUS
-// =============================================
-function setStatus(live, text) {
-  const dot = document.getElementById('status-dot');
-  const st = document.getElementById('status-text');
-  if (live) { dot.classList.add('live'); } else { dot.classList.remove('live'); }
-  st.textContent = text;
-  if (live) {
-    document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+function pinInput(d) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += d;
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
   }
-}
-
-// =============================================
-// DEXSCREENER API — Live Solana memecoins
-// =============================================
-async function fetchDexScreener() {
-  const results = [];
-  // Latest token profiles (newest launches)
-  try {
-    const r1 = await fetch('https://api.dexscreener.com/token-profiles/latest/v1', { signal: AbortSignal.timeout(8000) });
-    if (r1.ok) {
-      const d1 = await r1.json();
-      const mints = (Array.isArray(d1) ? d1 : []).filter(t => t.chainId === 'solana').slice(0,20).map(t => t.tokenAddress);
-      for (const mint of mints.slice(0,8)) {
-        try {
-          const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, { signal: AbortSignal.timeout(5000) });
-          if (r.ok) { const d = await r.json(); if (d.pairs) results.push(...d.pairs.filter(p => p.chainId === 'solana')); }
-        } catch(e) {}
-      }
+  if (pinEntry.length === 4) {
+    if (pinEntry === CORRECT_PIN) {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      initApp();
+    } else {
+      document.getElementById('pin-error').textContent = 'Wrong PIN';
+      document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('shake'));
+      setTimeout(() => {
+        pinEntry = '';
+        document.querySelectorAll('.pin-dot').forEach(d => { d.classList.remove('filled','shake'); });
+        document.getElementById('pin-error').textContent = '';
+      }, 600);
     }
-  } catch(e) { console.warn('profiles failed', e); }
-
-  // Search pump.fun, moonshot, raydium new pairs
-  const queries = ['pump.fun', 'moonshot', 'meme', 'pepe', 'dog', 'cat', 'trump', 'sol'];
-  for (const q of queries) {
-    try {
-      const r = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${q}`, { signal: AbortSignal.timeout(5000) });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.pairs) results.push(...d.pairs.filter(p =>
-          p.chainId === 'solana' &&
-          parseFloat(p.fdv || 0) < 5000000 &&
-          parseFloat(p.volume?.h24 || 0) > 1000
-        ));
-      }
-    } catch(e) {}
   }
-
-  // Deduplicate by pairAddress
-  const seen = new Set();
-  return results.filter(p => { if (seen.has(p.pairAddress)) return false; seen.add(p.pairAddress); return true; });
+}
+function pinDelete() {
+  pinEntry = pinEntry.slice(0,-1);
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d' + i).classList.toggle('filled', i < pinEntry.length);
+  }
+  document.getElementById('pin-error').textContent = '';
 }
 
-async function fetchNewPairs() { return []; }
+// State
+let allCoins = [];
+let trades = JSON.parse(localStorage.getItem('sniper_trades') || '[]');
+let budget = JSON.parse(localStorage.getItem('sniper_budget') || '{"bankroll":0,"riskPct":5}');
+let currentFilter = 'all';
+let countdownTimer = null;
+let countdownVal = 60;
+let activeTab = 'fire';
 
-// =============================================
-// RUGCHECK API
-// =============================================
-async function fetchRugScore(mint) {
+function initApp() {
+  updateBudgeBadge();
+  renderTrades();
+  fetchCoins();
+  startCountdown();
+}
+
+// ---- SCORING ENGINE ----
+function scoreToken(t) {
+  let score = 0;
+  const signals = [];
+
+  const price = parseFloat(t.priceUsd) || 0;
+  const change1h = parseFloat(t.priceChange?.h1) || 0;
+  const change6h = parseFloat(t.priceChange?.h6) || 0;
+  const change24h = parseFloat(t.priceChange?.h24) || 0;
+  const vol24h = parseFloat(t.volume?.h24) || 0;
+  const vol6h = parseFloat(t.volume?.h6) || 0;
+  const vol1h = parseFloat(t.volume?.h1) || 0;
+  const mcap = parseFloat(t.marketCap) || parseFloat(t.fdv) || 0;
+  const liq = parseFloat(t.liquidity?.usd) || 0;
+  const buys1h = parseInt(t.txns?.h1?.buys) || 0;
+  const sells1h = parseInt(t.txns?.h1?.sells) || 0;
+  const buys24h = parseInt(t.txns?.h24?.buys) || 0;
+  const sells24h = parseInt(t.txns?.h24?.sells) || 0;
+  const createdAt = t.pairCreatedAt || 0;
+  const ageHours = createdAt ? (Date.now() - createdAt) / 3600000 : 9999;
+
+  // 1. Momentum scoring (0-30 pts)
+  if (change1h > 20) { score += 15; signals.push({txt:'🚀 +'+change1h.toFixed(0)+'% 1H', type:'green'}); }
+  else if (change1h > 10) { score += 10; signals.push({txt:'📈 +'+change1h.toFixed(0)+'% 1H', type:'green'}); }
+  else if (change1h > 0) { score += 4; }
+  else if (change1h < -15) { score -= 10; signals.push({txt:'📉 '+change1h.toFixed(0)+'% 1H', type:'red'}); }
+
+  if (change6h > 50) { score += 10; signals.push({txt:'🔥 +'+change6h.toFixed(0)+'% 6H', type:'green'}); }
+  else if (change6h > 20) score += 5;
+
+  if (change24h > 100) { score += 5; signals.push({txt:'💎 +'+change24h.toFixed(0)+'% 24H', type:'green'}); }
+
+  // 2. Volume scoring (0-20 pts)
+  if (vol1h > 500000) { score += 20; signals.push({txt:'💰 $'+fmtNum(vol1h)+' vol/hr', type:'green'}); }
+  else if (vol1h > 100000) { score += 15; signals.push({txt:'💰 $'+fmtNum(vol1h)+' vol/hr', type:'green'}); }
+  else if (vol1h > 20000) { score += 8; }
+  else if (vol1h < 1000) { score -= 10; }
+
+  // 3. Buy pressure (0-20 pts)
+  const buyRatio = buys1h + sells1h > 0 ? buys1h / (buys1h + sells1h) : 0.5;
+  if (buyRatio > 0.7) { score += 20; signals.push({txt:'🟢 '+Math.round(buyRatio*100)+'% buys', type:'green'}); }
+  else if (buyRatio > 0.6) { score += 12; signals.push({txt:'🟢 '+Math.round(buyRatio*100)+'% buys', type:'green'}); }
+  else if (buyRatio > 0.5) { score += 6; }
+  else if (buyRatio < 0.4) { score -= 8; signals.push({txt:'🔴 '+Math.round((1-buyRatio)*100)+'% sells', type:'red'}); }
+
+  // 4. Market cap sweet spot (0-15 pts)
+  if (mcap > 0 && mcap < 300000) { score += 15; signals.push({txt:'💎 Micro cap', type:'green'}); }
+  else if (mcap < 1000000) { score += 10; signals.push({txt:'🔍 Small cap', type:'blue'}); }
+  else if (mcap < 5000000) { score += 5; }
+  else if (mcap > 50000000) { score -= 10; } // too big, less room to grow
+
+  // 5. Age bonus — new coins have more potential (0-10 pts)
+  if (ageHours < 1) { score += 10; signals.push({txt:'🆕 <1hr old', type:'yellow'}); }
+  else if (ageHours < 6) { score += 7; signals.push({txt:'🆕 <6hr old', type:'yellow'}); }
+  else if (ageHours < 24) { score += 4; signals.push({txt:'🆕 <24hr old', type:'yellow'}); }
+
+  // 6. Liquidity check (0-5 pts, penalty if too low)
+  if (liq < 5000) { score -= 15; signals.push({txt:'⚠️ Low liq', type:'red'}); }
+  else if (liq < 20000) { score -= 5; signals.push({txt:'⚠️ Low liq', type:'red'}); }
+  else if (liq > 100000) { score += 5; signals.push({txt:'✅ Good liq', type:'green'}); }
+
+  // 7. Volume acceleration — is vol increasing?
+  if (vol1h > 0 && vol6h > 0) {
+    const volRate = (vol1h * 6) / vol6h;
+    if (volRate > 3) { score += 5; signals.push({txt:'⚡ Vol surging', type:'green'}); }
+  }
+
+  // Cap score 0-100
+  score = Math.max(0, Math.min(100, score));
+
+  // Tier
+  let tier = 'watch';
+  if (score >= 70) tier = 'fire';
+  else if (score >= 50) tier = 'hot';
+
+  return { score: Math.round(score), signals, tier,
+    price, change1h, change6h, change24h, vol24h, vol1h,
+    mcap, liq, buys1h, sells1h, buyRatio, ageHours };
+}
+
+// ---- FETCH ----
+async function fetchCoins() {
   try {
-    const res = await fetch(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`, {
-      signal: AbortSignal.timeout(5000)
+    const endpoints = [
+      'https://api.dexscreener.com/token-profiles/latest/v1',
+      'https://api.dexscreener.com/latest/dex/search?q=pump',
+      'https://api.dexscreener.com/latest/dex/search?q=raydium',
+      'https://api.dexscreener.com/latest/dex/search?q=memecoin',
+    ];
+
+    const results = await Promise.allSettled(endpoints.map(u => fetch(u).then(r => r.json())));
+
+    let raw = [];
+    results.forEach(r => {
+      if (r.status === 'fulfilled') {
+        const d = r.value;
+        if (d.pairs) raw.push(...d.pairs);
+        else if (Array.isArray(d)) {
+          // token profiles — need to fetch pairs for these
+          raw.push(...d);
+        }
+      }
     });
-    if (!res.ok) return null;
-    const d = await res.json();
-    return d;
-  } catch(e) {
-    return null;
+
+    // Filter: Solana only, has price, not stable
+    const stables = ['usdc','usdt','dai','busd','ust','sol/usdc','wsol'];
+    raw = raw.filter(t => {
+      if (!t || !t.chainId) return false;
+      if (t.chainId !== 'solana') return false;
+      const sym = ((t.baseToken?.symbol || t.symbol || '') + (t.quoteToken?.symbol || '')).toLowerCase();
+      if (stables.some(s => sym.includes(s))) return false;
+      if (!t.priceUsd || parseFloat(t.priceUsd) <= 0) return false;
+      return true;
+    });
+
+    // Deduplicate by pair address
+    const seen = new Set();
+    raw = raw.filter(t => {
+      const key = t.pairAddress || t.tokenAddress || t.baseToken?.address;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Score everything
+    allCoins = raw.map(t => ({ ...t, _scored: scoreToken(t) }));
+
+    // Sort by score descending
+    allCoins.sort((a,b) => b._scored.score - a._scored.score);
+
+    renderFireTab();
+    renderAllTab();
+
+    document.getElementById('fire-error').innerHTML = '';
+
+  } catch (e) {
+    document.getElementById('fire-list').innerHTML = `
+      <div class="error-banner">⚠️ API error: ${e.message}. Retrying in 60s.</div>
+    `;
   }
 }
 
-// =============================================
-// PROCESS + ENRICH PAIRS
-// =============================================
-function processPairs(rawPairs) {
-  return rawPairs
-    .filter(p => p.chainId === 'solana' && p.baseToken && p.priceUsd)
-    .slice(0, 40)
-    .map(p => ({
-      name: p.baseToken.name || p.baseToken.symbol,
-      ticker: p.baseToken.symbol,
-      mint: p.baseToken.address,
-      price: parseFloat(p.priceUsd) || 0,
-      change24h: parseFloat(p.priceChange?.h24) || 0,
-      change1h: parseFloat(p.priceChange?.h1) || 0,
-      volume24h: parseFloat(p.volume?.h24) || 0,
-      mcap: parseFloat(p.fdv) || 0,
-      liquidity: parseFloat(p.liquidity?.usd) || 0,
-      txns24h: (p.txns?.h24?.buys || 0) + (p.txns?.h24?.sells || 0),
-      buys24h: p.txns?.h24?.buys || 0,
-      sells24h: p.txns?.h24?.sells || 0,
-      pairUrl: p.url || `https://dexscreener.com/solana/${p.pairAddress}`,
-      pairAddress: p.pairAddress,
-      created: p.pairCreatedAt || 0,
-      rugScore: null,
-      rugLabel: 'Checking...',
-    }));
-}
+// ---- RENDER FIRE TAB ----
+function renderFireTab() {
+  // Only show score >= 60
+  const hot = allCoins.filter(t => t._scored.score >= 60).slice(0, 20);
+  const list = document.getElementById('fire-list');
+  document.getElementById('fire-count').textContent = `${hot.length} high-potential coins`;
 
-function fmtNum(n) {
-  if (!n) return '$0';
-  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
-  return '$' + n.toFixed(0);
-}
-
-function fmtPrice(p) {
-  if (!p) return '$0';
-  if (p < 0.000001) return '$' + p.toExponential(2);
-  if (p < 0.01) return '$' + p.toFixed(7);
-  if (p < 1) return '$' + p.toFixed(4);
-  return '$' + p.toFixed(2);
-}
-
-function ageStr(ts) {
-  if (!ts) return '?';
-  const mins = Math.floor((Date.now() - ts) / 60000);
-  if (mins < 60) return mins + 'm ago';
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + 'h ago';
-  return Math.floor(hrs/24) + 'd ago';
-}
-
-function rugClass(score) {
-  if (score === null) return 'rug-medium';
-  if (score < 300) return 'rug-safe';
-  if (score < 700) return 'rug-medium';
-  return 'rug-danger';
-}
-
-function rugLabel(score) {
-  if (score === null) return 'Unknown';
-  if (score < 300) return 'SAFE';
-  if (score < 700) return 'CAUTION';
-  return 'DANGER';
-}
-
-function perTradeAmount() {
-  if (!budget.bankroll) return null;
-  return (budget.bankroll * budget.risk / 100).toFixed(3);
-}
-
-// =============================================
-// RENDER HYPE
-// =============================================
-function renderHype() {
-  const el = document.getElementById('hype-content');
-  if (!coins.length) {
-    el.innerHTML = '<div class="empty">No signals yet. Pull to refresh.</div>';
+  if (hot.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><h3>No fire picks right now</h3><p>Scanner is looking for coins scoring 60+.<br>Check back in a minute — market conditions change fast.</p></div>`;
     return;
   }
-
-  // Score each coin as opportunity
-  function scoreOpportunity(c) {
-    let score = 0;
-    const ageHrs = c.created ? (Date.now() - c.created) / 3600000 : 999;
-    if (ageHrs < 1) score += 40;
-    else if (ageHrs < 6) score += 25;
-    else if (ageHrs < 24) score += 10;
-    if (c.change1h > 50) score += 30;
-    else if (c.change1h > 20) score += 20;
-    else if (c.change1h > 5) score += 10;
-    if (c.mcap > 0 && c.mcap < 100000) score += 30;
-    else if (c.mcap < 500000) score += 20;
-    else if (c.mcap < 2000000) score += 10;
-    const buyRatio = c.txns24h > 0 ? c.buys24h / c.txns24h : 0;
-    if (buyRatio > 0.7) score += 20;
-    else if (buyRatio > 0.55) score += 10;
-    if (c.volume24h > 50000) score += 10;
-    if (c.volume24h > 200000) score += 10;
-    if (c.rugScore !== null && c.rugScore < 300) score += 15;
-    return score;
-  }
-
-  const hot = [...coins].map(c => ({...c, oppScore: scoreOpportunity(c)}))
-    .sort((a,b) => b.oppScore - a.oppScore).slice(0, 20);
-  const pt = perTradeAmount();
-
-  el.innerHTML = hot.map(c => {
-    const ageHrs = c.created ? (Date.now() - c.created) / 3600000 : 999;
-    const isNew = ageHrs < 6;
-    const isUltraNew = ageHrs < 1;
-    const isHot = c.change1h > 20;
-    const buyRatio = c.txns24h > 0 ? (c.buys24h / c.txns24h * 100).toFixed(0) : 0;
-    const oppPct = Math.min(100, c.oppScore);
-    const oppColor = oppPct > 70 ? 'var(--safe)' : oppPct > 40 ? 'var(--warn)' : 'var(--muted)';
-    const signal = oppPct > 70 ? '🔥 STRONG SIGNAL' : oppPct > 40 ? '⚡ WATCH' : '👀 MONITOR';
-    const sources = [];
-    if (isUltraNew) sources.push('<span class="tag tag-pump">⚡ JUST LAUNCHED</span>');
-    else if (isNew) sources.push('<span class="tag tag-new">🆕 NEW</span>');
-    if (c.volume24h > 100000) sources.push('<span class="tag tag-whale">🐋 WHALE VOL</span>');
-    if (isHot) sources.push('<span class="tag tag-pump">🚀 PUMPING</span>');
-    if (buyRatio > 65) sources.push('<span class="tag tag-tg">📈 BUY PRESSURE'+buyRatio+'%</span>');
-    if (c.mcap > 0 && c.mcap < 200000) sources.push('<span class="tag tag-tg">💎 LOW MCAP</span>');
-
-    return `<div class="signal-card" style="border-color:${oppPct>70?'rgba(0,255,136,.4)':oppPct>40?'rgba(255,170,0,.3)':''}" >
-      ${isUltraNew ? '<div class="early-banner">⚡ JUST LAUNCHED — ULTRA EARLY — HIGH RISK</div>' : isNew ? '<div class="early-banner">⚠️ EARLY ENTRY — HIGH RISK / HIGH REWARD</div>' : ''}
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-family:var(--font-mono);font-size:9px;color:${oppColor}">${signal}</span>
-        <span style="font-family:var(--font-mono);font-size:9px;color:${oppColor}">SCORE: ${oppPct}/100</span>
-      </div>
-      <div style="height:3px;background:var(--border);border-radius:2px;margin-bottom:8px"><div style="height:100%;width:${oppPct}%;background:${oppColor};border-radius:2px"></div></div>
-      <div class="signal-header">
-        <div>
-          <div class="signal-name">${c.ticker} <span style="color:var(--muted);font-size:11px;font-weight:400">${c.name}</span></div>
-          <div class="signal-source">${ageStr(c.created)} • ${fmtNum(c.volume24h)} vol • mcap ${fmtNum(c.mcap)}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:var(--font-mono);font-size:13px">${fmtPrice(c.price)}</div>
-          <div class="coin-change ${c.change1h >= 0 ? 'green' : 'red'}">${c.change1h >= 0 ? '+' : ''}${c.change1h.toFixed(1)}% 1h</div>
-        </div>
-      </div>
-      <div class="signal-tags">${sources.join('')}</div>
-      ${pt ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--accent)">💰 Suggested buy: <strong>${pt} SOL</strong></div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <a href="${c.pairUrl}" target="_blank" class="btn btn-chart">📊 CHART</a>
-        <a href="https://phantom.app/ul/v1/browse?ref=${encodeURIComponent(c.pairUrl)}" class="btn btn-buy">👻 BUY</a>
-        <div class="btn btn-track" onclick='trackCoin(${JSON.stringify(c).replace(/'/g, "&#39;")})'>📌 TRACK</div>
-      </div>
-    </div>`;
-  }).join('');
+  list.innerHTML = hot.map(t => coinCardHTML(t)).join('');
 }
 
-// =============================================
-// RENDER COINS
-// =============================================
-function renderCoins() {
-  const el = document.getElementById('coins-content');
-  if (!coins.length) {
-    el.innerHTML = '<div class="empty">No coins loaded.</div>';
+// ---- RENDER ALL TAB ----
+function renderAllTab() {
+  let coins = [...allCoins];
+
+  if (currentFilter === 'safe') coins = coins.filter(t => t._scored.liq > 50000 && t._scored.score >= 40);
+  else if (currentFilter === 'new') coins = coins.filter(t => t._scored.ageHours < 24);
+  else if (currentFilter === 'pump') coins = coins.filter(t => t._scored.change1h > 15 || t._scored.change6h > 30);
+  else if (currentFilter === 'risky') coins = coins.filter(t => t._scored.score < 40);
+
+  coins = coins.slice(0, 50);
+  document.getElementById('all-count').textContent = `${coins.length} coins`;
+
+  const list = document.getElementById('all-list');
+  if (coins.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🪙</div><h3>No coins match filter</h3><p>Try a different filter.</p></div>`;
     return;
   }
-
-  let filtered = [...coins];
-  if (activeFilter === 'hot') filtered = filtered.filter(c => c.change1h > 10 || c.change24h > 50);
-  if (activeFilter === 'new') filtered = filtered.filter(c => c.created && Date.now() - c.created < 6 * 3600 * 1000);
-  if (activeFilter === 'safe') filtered = filtered.filter(c => c.rugScore !== null && c.rugScore < 300);
-  if (activeFilter === 'risky') filtered = filtered.filter(c => c.rugScore === null || c.rugScore >= 500);
-
-  const pt = perTradeAmount();
-
-  el.innerHTML = filtered.slice(0, 25).map(c => {
-    const rs = c.rugScore;
-    const rPct = rs !== null ? Math.min(100, rs / 10) : 50;
-    const icon = c.ticker ? c.ticker.charAt(0).toUpperCase() : '?';
-
-    return `<div class="coin-card">
-      <div class="coin-header">
-        <div class="coin-name-wrap">
-          <div class="coin-icon">${icon}</div>
-          <div>
-            <div class="coin-name">${c.ticker}</div>
-            <div class="coin-ticker">${c.name}</div>
-          </div>
-        </div>
-        <div class="coin-price">
-          <div>${fmtPrice(c.price)}</div>
-          <div class="coin-change ${c.change24h >= 0 ? 'green' : 'red'}">${c.change24h >= 0 ? '▲' : '▼'}${Math.abs(c.change24h).toFixed(1)}% 24h</div>
-        </div>
-      </div>
-      <div class="rug-bar-wrap">
-        <div class="rug-label"><span>RUG RISK: <strong>${rugLabel(rs)}</strong></span><span>${ageStr(c.created)}</span></div>
-        <div class="rug-bar"><div class="rug-fill ${rugClass(rs)}" style="width:${rPct}%"></div></div>
-      </div>
-      <div class="coin-stats">
-        <div class="stat"><div class="stat-label">MCAP</div><div class="stat-value">${fmtNum(c.mcap)}</div></div>
-        <div class="stat"><div class="stat-label">VOL 24H</div><div class="stat-value">${fmtNum(c.volume24h)}</div></div>
-        <div class="stat"><div class="stat-label">LIQ</div><div class="stat-value">${fmtNum(c.liquidity)}</div></div>
-      </div>
-      ${pt ? `<div style="padding:6px 12px;font-family:var(--font-mono);font-size:10px;color:var(--accent);border-top:1px solid var(--border)">💰 Position size: <strong>${pt} SOL</strong></div>` : ''}
-      <div class="coin-actions">
-        <a href="${c.pairUrl}" target="_blank" class="btn btn-chart">📊 CHART</a>
-        <a href="https://phantom.app/ul/v1/browse?ref=${encodeURIComponent(c.pairUrl)}" class="btn btn-buy">👻 BUY</a>
-        <div class="btn btn-track" onclick='trackCoin(${JSON.stringify(c).replace(/'/g, "&#39;")})'>📌 TRACK</div>
-      </div>
-    </div>`;
-  }).join('') || '<div class="empty">No coins match this filter.</div>';
+  list.innerHTML = coins.map(t => coinCardHTML(t)).join('');
 }
 
-// =============================================
-// TRADES
-// =============================================
-function trackCoin(c) {
-  document.getElementById('t-name').value = c.ticker;
-  document.getElementById('t-ca').value = c.mint;
-  document.getElementById('t-entry').value = c.price;
-  if (budget.bankroll) document.getElementById('t-amount').value = perTradeAmount();
-  document.querySelectorAll('.tab')[2].click();
+function coinCardHTML(t) {
+  const s = t._scored;
+  const sym = t.baseToken?.symbol || t.symbol || '???';
+  const name = t.baseToken?.name || t.name || '';
+  const addr = t.baseToken?.address || t.tokenAddress || '';
+  const pairAddr = t.pairAddress || '';
+  const dexUrl = `https://dexscreener.com/solana/${pairAddr || addr}`;
+  const phantomUrl = addr ? `https://phantom.app/ul/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000` : '#';
+
+  const posSize = budget.bankroll > 0
+    ? '$' + ((budget.bankroll * budget.riskPct / 100)).toFixed(2)
+    : null;
+
+  const scoreClass = s.tier === 'fire' ? 'fire' : s.tier === 'hot' ? 'hot' : 'watch';
+
+  const rugScore = Math.min(100, Math.max(0, 100 - (s.liq < 5000 ? 60 : s.liq < 20000 ? 30 : 0) - (s.score < 30 ? 20 : 0)));
+  const rugColor = rugScore > 70 ? '#00e87a' : rugScore > 40 ? '#ffcc00' : '#ff2d55';
+  const rugLabel = rugScore > 70 ? 'Safer' : rugScore > 40 ? 'Moderate risk' : 'High risk';
+
+  return `
+  <div class="coin-card ${scoreClass}">
+    <div class="coin-top">
+      <div class="coin-name-block">
+        <div class="coin-symbol">${sym}</div>
+        <div class="coin-name">${name.slice(0,28)}</div>
+      </div>
+      <div class="score-circle ${scoreClass}">
+        <div class="score-num">${s.score}</div>
+        <div class="score-lbl">SCORE</div>
+      </div>
+    </div>
+
+    ${posSize ? `<div class="size-pill">💰 Suggested: ${posSize} (${budget.riskPct}% risk)</div>` : ''}
+
+    <div class="coin-stats">
+      <div class="stat-block">
+        <div class="stat-val">${fmtPrice(s.price)}</div>
+        <div class="stat-lbl">PRICE</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val ${s.change1h >= 0 ? 'up':'down'}">${s.change1h >= 0 ? '+':''}${s.change1h.toFixed(1)}%</div>
+        <div class="stat-lbl">1H CHG</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">${fmtNum(s.vol1h)}</div>
+        <div class="stat-lbl">VOL/1H</div>
+      </div>
+    </div>
+    <div class="coin-stats" style="margin-top:-4px">
+      <div class="stat-block">
+        <div class="stat-val">${s.mcap > 0 ? '$'+fmtNum(s.mcap) : 'N/A'}</div>
+        <div class="stat-lbl">MCAP</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val ${s.change6h >= 0 ? 'up':'down'}">${s.change6h >= 0 ? '+':''}${s.change6h.toFixed(1)}%</div>
+        <div class="stat-lbl">6H CHG</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-val">${Math.round(s.buyRatio*100)}% buys</div>
+        <div class="stat-lbl">BUY/SELL</div>
+      </div>
+    </div>
+
+    <div class="signal-tags">
+      ${s.signals.slice(0,4).map(sg => `<span class="tag ${sg.type}">${sg.txt}</span>`).join('')}
+      ${s.ageHours < 9999 ? `<span class="tag blue">${fmtAge(s.ageHours)} old</span>` : ''}
+    </div>
+
+    <div class="rug-row">
+      <div style="font-size:10px;color:var(--sub);width:55px">RUG RISK</div>
+      <div class="rug-bar-bg">
+        <div class="rug-bar-fill" style="width:${rugScore}%;background:${rugColor}"></div>
+      </div>
+      <div class="rug-lbl" style="color:${rugColor}">${rugLabel}</div>
+    </div>
+
+    <div class="coin-actions">
+      <button class="btn-buy" onclick="window.open('${phantomUrl}','_blank')">BUY IN PHANTOM</button>
+      <button class="btn-track" onclick="quickTrack('${sym}','${s.price}')">TRACK</button>
+      <a class="btn-chart" href="${dexUrl}" target="_blank">📊</a>
+    </div>
+  </div>`;
 }
 
+function quickTrack(sym, price) {
+  document.getElementById('t-symbol').value = sym;
+  document.getElementById('t-entry').value = price;
+  if (budget.bankroll > 0) {
+    document.getElementById('t-amount').value = (budget.bankroll * budget.riskPct / 100).toFixed(2);
+  }
+  switchTab('track');
+}
+
+// ---- TRADES ----
 function addTrade() {
-  const name = document.getElementById('t-name').value.trim();
-  const ca = document.getElementById('t-ca').value.trim();
+  const sym = document.getElementById('t-symbol').value.toUpperCase().trim();
   const entry = parseFloat(document.getElementById('t-entry').value);
   const amount = parseFloat(document.getElementById('t-amount').value);
-  if (!name || !entry || !amount) { alert('Fill in name, entry price, and amount.'); return; }
-  trades.push({ id: Date.now(), name, ca, entry, amount, date: new Date().toISOString() });
+  const ca = document.getElementById('t-ca').value.trim();
+
+  if (!sym || !entry || !amount) { alert('Fill in symbol, entry price and amount'); return; }
+
+  trades.push({ id: Date.now(), sym, entry, amount, ca, ts: new Date().toLocaleDateString() });
   localStorage.setItem('sniper_trades', JSON.stringify(trades));
-  ['t-name','t-ca','t-entry','t-amount'].forEach(id => document.getElementById(id).value = '');
   renderTrades();
-  renderExitAlerts();
+  document.getElementById('t-symbol').value = '';
+  document.getElementById('t-entry').value = '';
+  document.getElementById('t-amount').value = '';
+  document.getElementById('t-ca').value = '';
 }
 
-function removeTrade(id) {
+function deleteTrade(id) {
   trades = trades.filter(t => t.id !== id);
   localStorage.setItem('sniper_trades', JSON.stringify(trades));
   renderTrades();
-  renderExitAlerts();
 }
 
 function renderTrades() {
-  const el = document.getElementById('trades-list');
-  if (!trades.length) {
-    el.innerHTML = '<div class="empty">No trades logged yet.</div>';
+  const list = document.getElementById('trade-list');
+  const exitList = document.getElementById('exit-trade-list');
+  if (!list) return;
+
+  if (trades.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:30px"><div class="icon">📊</div><p>No trades logged yet.<br>Use FIRE or ALL tab to find a coin.</p></div>`;
+    if (exitList) exitList.innerHTML = `<div style="color:var(--sub);font-size:13px;padding:12px">Log trades in the Track tab to see exit plans here.</div>`;
     return;
   }
-  el.innerHTML = trades.map(t => {
-    const solPrice = 150; // approximate
-    const usdVal = t.amount * solPrice;
-    return `<div class="trade-card">
-      <div class="trade-header">
+
+  list.innerHTML = trades.map(t => {
+    const x2 = (t.entry * 2).toPrecision(4);
+    const x5 = (t.entry * 5).toPrecision(4);
+    const x10 = (t.entry * 10).toPrecision(4);
+    const stop = (t.entry * 0.7).toPrecision(4);
+    return `
+    <div class="trade-card">
+      <div class="trade-head">
         <div>
-          <div class="trade-name">${t.name}</div>
-          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${t.date.slice(0,10)} • ${t.amount} SOL</div>
+          <div class="trade-symbol">${t.sym}</div>
+          <div style="font-size:11px;color:var(--sub)">${t.ts} · $${t.amount} in</div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="trade-pnl orange">Entry: ${fmtPrice(t.entry)}</div>
-          <button onclick="removeTrade(${t.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:12px;color:var(--sub)">Entry: $${t.entry}</div>
         </div>
       </div>
-      <div class="exit-plan">
-        <div class="exit-row"><span class="exit-label">🎯 Sell 30% at 2x:</span><span class="green">${fmtPrice(t.entry * 2)}</span></div>
-        <div class="exit-row"><span class="exit-label">🎯 Sell 40% at 5x:</span><span class="green">${fmtPrice(t.entry * 5)}</span></div>
-        <div class="exit-row"><span class="exit-label">🚀 Ride 30% at 10x:</span><span class="green">${fmtPrice(t.entry * 10)}</span></div>
-        <div class="exit-row"><span class="exit-label">🛑 Stop loss (-30%):</span><span class="red">${fmtPrice(t.entry * 0.7)}</span></div>
+      <div class="exit-levels">
+        <div class="exit-level"><div class="mult x2">2X</div><div class="price">$${x2}</div><div style="font-size:10px;color:var(--sub)">$${(t.amount).toFixed(0)} → $${(t.amount*2).toFixed(0)}</div></div>
+        <div class="exit-level"><div class="mult x5">5X</div><div class="price">$${x5}</div><div style="font-size:10px;color:var(--sub)">$${(t.amount).toFixed(0)} → $${(t.amount*5).toFixed(0)}</div></div>
+        <div class="exit-level"><div class="mult x10">10X</div><div class="price">$${x10}</div><div style="font-size:10px;color:var(--sub)">$${(t.amount).toFixed(0)} → $${(t.amount*10).toFixed(0)}</div></div>
       </div>
-      ${t.ca ? `<div style="padding:6px 12px;border-top:1px solid var(--border)">
-        <a href="https://dexscreener.com/solana/${t.ca}" target="_blank" class="btn btn-chart" style="display:inline-block;width:auto;padding:5px 10px">📊 DEX Chart</a>
-      </div>` : ''}
+      <div class="stop-loss">
+        <span>⛔ STOP LOSS</span><span>$${stop} (-30%)</span>
+      </div>
+      ${t.ca ? `<a href="https://dexscreener.com/solana/${t.ca}" target="_blank" style="display:block;text-align:center;color:var(--blue);font-size:12px;margin-bottom:10px;text-decoration:none">📊 View on DEXScreener</a>` : ''}
+      <button class="del-trade-btn" onclick="deleteTrade(${t.id})">✕ Remove Trade</button>
     </div>`;
   }).join('');
+
+  if (exitList) exitList.innerHTML = trades.map(t => `
+    <div class="trade-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:18px">${t.sym}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--sub)">entry $${t.entry}</span>
+      </div>
+      <div style="font-size:12px;color:var(--sub);margin-top:8px;line-height:1.8">
+        Take 25% at 2x → <span style="color:var(--blue)">$${(t.entry*2).toPrecision(4)}</span><br>
+        Take 25% at 5x → <span style="color:var(--yellow)">$${(t.entry*5).toPrecision(4)}</span><br>
+        Let 50% ride to 10x → <span style="color:var(--green)">$${(t.entry*10).toPrecision(4)}</span><br>
+        Stop loss at → <span style="color:var(--red)">$${(t.entry*0.7).toPrecision(4)}</span>
+      </div>
+    </div>`).join('');
 }
 
-function renderExitAlerts() {
-  const el = document.getElementById('dex-alerts-list');
-  if (!trades.length) {
-    el.innerHTML = '<div class="empty">Log trades in TRACK tab to generate alert links</div>';
-    return;
-  }
-  el.innerHTML = trades.map(t => `<div class="playbook-item">
-    <div class="playbook-title">${t.name}</div>
-    <div class="playbook-desc" style="margin-bottom:6px">Entry: ${fmtPrice(t.entry)} | Alerts: ${fmtPrice(t.entry*2)} / ${fmtPrice(t.entry*5)} / Stop: ${fmtPrice(t.entry*0.7)}</div>
-    ${t.ca ? `<a href="https://dexscreener.com/solana/${t.ca}" target="_blank" class="btn btn-chart" style="display:inline-block;width:auto;padding:5px 10px">🔔 Open DEXScreener → Set Alerts</a>` : '<span style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">No contract address</span>'}
-  </div>`).join('');
+// ---- BUDGET ----
+function calcBudget() {
+  const br = parseFloat(document.getElementById('bankroll').value) || 0;
+  const rp = parseFloat(document.getElementById('risk-pct').value) || 5;
+  const pos = br * rp / 100;
+  document.getElementById('budget-result').innerHTML = `
+    Bankroll: <span>$${br.toFixed(2)}</span><br>
+    Risk per trade: <span>${rp}%</span><br>
+    Position size: <span>$${pos.toFixed(2)}</span><br>
+    Max concurrent (5% each): <span>${Math.floor(100/rp)} trades</span>
+  `;
 }
-
-// =============================================
-// BUDGET
-// =============================================
-let selectedRisk = 10;
-function setRisk(r) {
-  selectedRisk = r;
-  document.querySelectorAll('.risk-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.risk) === r));
-  updateBudgetSummary();
+function saveBudget() {
+  budget.bankroll = parseFloat(document.getElementById('bankroll').value) || 0;
+  budget.riskPct = parseFloat(document.getElementById('risk-pct').value) || 5;
+  localStorage.setItem('sniper_budget', JSON.stringify(budget));
+  updateBudgeBadge();
+  closeBudget();
+  renderFireTab();
+  renderAllTab();
 }
-
-function updateBudgetSummary() {
-  const br = parseFloat(document.getElementById('b-bankroll')?.value) || 0;
-  const pos = parseInt(document.getElementById('b-positions')?.value) || 5;
-  if (!br) return;
-  document.getElementById('bs-safe').textContent = (br * 0.05).toFixed(3) + ' SOL';
-  document.getElementById('bs-med').textContent = (br * 0.10).toFixed(3) + ' SOL';
-  document.getElementById('bs-degen').textContent = (br * 0.20).toFixed(3) + ' SOL';
-  document.getElementById('bs-max').textContent = (br * selectedRisk / 100 * pos).toFixed(3) + ' SOL';
-  document.getElementById('bs-reserve').textContent = (br - br * selectedRisk / 100 * pos).toFixed(3) + ' SOL';
+function updateBudgeBadge() {
+  document.getElementById('budget-badge').textContent = budget.bankroll > 0
+    ? `$${budget.bankroll.toFixed(0)} · ${budget.riskPct}%`
+    : 'SET BUDGET';
 }
-
-document.getElementById('b-bankroll')?.addEventListener('input', updateBudgetSummary);
-document.getElementById('b-positions')?.addEventListener('input', updateBudgetSummary);
-
-function openBudget() { document.getElementById('budget-modal').classList.add('open'); }
+function openBudget() {
+  document.getElementById('bankroll').value = budget.bankroll || '';
+  document.getElementById('risk-pct').value = budget.riskPct || 5;
+  calcBudget();
+  document.getElementById('budget-modal').classList.add('open');
+}
 function closeBudget() { document.getElementById('budget-modal').classList.remove('open'); }
 
-function saveBudget() {
-  const br = parseFloat(document.getElementById('b-bankroll').value) || 0;
-  const pos = parseInt(document.getElementById('b-positions').value) || 5;
-  budget = { bankroll: br, risk: selectedRisk, maxPositions: pos };
-  const badge = document.getElementById('budget-badge');
-  badge.textContent = `💰 ${br} SOL / ${selectedRisk}%`;
-  closeBudget();
-  renderHype();
-  renderCoins();
+// ---- NAV ----
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-content-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
 }
 
-// =============================================
-// MAIN FETCH + REFRESH
-// =============================================
-async function loadData() {
-  setStatus(false, 'Fetching live data...');
-  document.getElementById('refresh-btn').classList.add('spinning');
-
-  try {
-    const rawPairs = await fetchDexScreener();
-    if (!rawPairs.length) throw new Error('No pairs returned');
-
-    coins = processPairs(rawPairs);
-    setStatus(true, `Live — ${coins.length} coins`);
-    renderHype();
-    renderCoins();
-
-    // Background rug check for first 10 coins
-    enrichRugScores(coins.slice(0, 10));
-
-  } catch(e) {
-    console.error('Load failed:', e);
-    setStatus(false, 'API error — retrying...');
-    document.getElementById('hype-content').innerHTML =
-      '<div class="net-error">⚠️ Could not reach DexScreener API.<br>This app requires internet. Try refreshing.</div>';
-    document.getElementById('coins-content').innerHTML =
-      '<div class="net-error">⚠️ Could not reach DexScreener API.<br>This app requires internet. Try refreshing.</div>';
-  }
-
-  document.getElementById('refresh-btn').classList.remove('spinning');
+function setFilter(el, f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAllTab();
 }
 
-async function enrichRugScores(batch) {
-  for (const coin of batch) {
-    try {
-      const report = await fetchRugScore(coin.mint);
-      if (report) {
-        coin.rugScore = report.score || null;
-        // Re-render silently
-        renderCoins();
-      }
-    } catch(e) {}
-    await new Promise(r => setTimeout(r, 300)); // rate limit
-  }
-}
-
+// ---- REFRESH ----
 function refreshAll() {
-  loadData();
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  document.getElementById('fire-list').innerHTML = '<div class="loading-state"><div class="loader"></div><p>Scanning…</p></div>';
+  fetchCoins().finally(() => {
+    setTimeout(() => btn.classList.remove('spinning'), 800);
+  });
+  resetCountdown();
 }
 
-// Auto-refresh every 60 seconds
-function startAutoRefresh() {
-  clearInterval(refreshTimer);
-  refreshTimer = setInterval(loadData, 60000);
+function startCountdown() {
+  countdownVal = 60;
+  countdownTimer = setInterval(() => {
+    countdownVal--;
+    const pct = (countdownVal / 60) * 100;
+    const fill = document.getElementById('countdown-fill');
+    if (fill) fill.style.width = pct + '%';
+    if (countdownVal <= 0) {
+      resetCountdown();
+      fetchCoins();
+    }
+  }, 1000);
+}
+function resetCountdown() {
+  countdownVal = 60;
+  const fill = document.getElementById('countdown-fill');
+  if (fill) fill.style.width = '100%';
 }
 
-// Init — only run if already unlocked
-if (sessionStorage.getItem(PIN_KEY) === 'yes') {
-  loadData();
-  renderTrades();
-  startAutoRefresh();
+// ---- UTILS ----
+function fmtPrice(p) {
+  if (!p || p === 0) return '$0';
+  if (p < 0.000001) return '$' + p.toExponential(2);
+  if (p < 0.001) return '$' + p.toPrecision(3);
+  if (p < 1) return '$' + p.toFixed(4);
+  return '$' + p.toFixed(2);
+}
+function fmtNum(n) {
+  if (!n) return '0';
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toFixed(0);
+}
+function fmtAge(h) {
+  if (h < 1) return Math.round(h*60) + 'm';
+  if (h < 24) return Math.round(h) + 'h';
+  return Math.round(h/24) + 'd';
+}
+
+// Close modal on overlay click
+document.getElementById('budget-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeBudget();
+});
+
+// PWA service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sol-sniper/sw.js').catch(()=>{});
 }
 </script>
 </body>
