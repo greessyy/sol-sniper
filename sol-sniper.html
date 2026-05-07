@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SOL SNIPER</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #050508;
+    --bg2: #0a0a10;
+    --panel: #0e0e16;
+    --border: #1a1a2e;
+    --accent: #00ff88;
+    --accent2: #ff3366;
+    --accent3: #ffaa00;
+    --accent4: #00aaff;
+    --text: #e0e0e0;
+    --muted: #555570;
+    --danger: #ff3366;
+    --safe: #00ff88;
+    --warn: #ffaa00;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Rajdhani', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    overflow: hidden;
+  }
+
+  /* SCANLINE overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.01) 2px, rgba(0,255,136,0.01) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  #app {
+    display: flex; flex-direction: column;
+    height: 100dvh; max-width: 480px; margin: 0 auto;
+    position: relative;
+  }
+
+  /* HEADER */
+  #header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px 8px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family: var(--font-mono);
+    font-size: 18px; letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,136,0.5);
+  }
+  .logo span { color: var(--accent2); }
+  #budget-badge {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  #budget-badge:active { transform: scale(.95); }
+  #refresh-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px;
+    color: var(--muted); cursor: pointer; font-size: 14px;
+    transition: all .2s; margin-left: 8px;
+  }
+  #refresh-btn.spinning { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* STATUS BAR */
+  #status-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 16px;
+    background: var(--bg2);
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted);
+    animation: pulse 2s infinite;
+  }
+  .status-dot.live { background: var(--accent); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  #last-update { margin-left: auto; }
+
+  /* TABS */
+  #tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1; padding: 10px 4px;
+    text-align: center;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s; letter-spacing: 1px;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  #content {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  #content::-webkit-scrollbar { width: 3px; }
+  #content::-webkit-scrollbar-track { background: var(--bg); }
+  #content::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* PANELS */
+  .panel { display: none; padding: 12px 16px; }
+  .panel.active { display: block; }
+
+  /* COIN CARD */
+  .coin-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .coin-card:active { border-color: var(--accent); }
+  .coin-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px 8px;
+  }
+  .coin-name-wrap { display: flex; align-items: center; gap: 8px; }
+  .coin-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent4));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; color: var(--bg);
+    flex-shrink: 0;
+  }
+  .coin-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .coin-ticker { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .coin-price {
+    text-align: right;
+    font-family: var(--font-mono); font-size: 13px; color: var(--text);
+  }
+  .coin-change { font-size: 11px; }
+  .green { color: var(--safe); }
+  .red { color: var(--danger); }
+  .orange { color: var(--warn); }
+
+  .coin-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .stat {
+    background: var(--panel);
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+  .stat-value { font-family: var(--font-mono); font-size: 11px; color: var(--text); margin-top: 1px; }
+
+  .coin-actions {
+    display: flex; gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    flex: 1; padding: 7px 4px;
+    border-radius: 6px; border: none;
+    font-family: var(--font-mono); font-size: 10px;
+    cursor: pointer; transition: all .15s;
+    text-decoration: none; text-align: center;
+    display: block;
+  }
+  .btn:active { transform: scale(.95); }
+  .btn-buy { background: rgba(0,255,136,.15); color: var(--safe); border: 1px solid rgba(0,255,136,.3); }
+  .btn-chart { background: rgba(0,170,255,.15); color: var(--accent4); border: 1px solid rgba(0,170,255,.3); }
+  .btn-track { background: rgba(255,170,0,.15); color: var(--warn); border: 1px solid rgba(255,170,0,.3); }
+
+  /* RUG SCORE */
+  .rug-bar-wrap { padding: 6px 12px 8px; }
+  .rug-label { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--muted); margin-bottom: 3px; }
+  .rug-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .rug-fill { height: 100%; border-radius: 2px; transition: width .5s; }
+  .rug-safe { background: var(--safe); }
+  .rug-medium { background: var(--warn); }
+  .rug-danger { background: var(--danger); }
+
+  /* BUDGET MODAL */
+  #budget-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.85); z-index: 1000;
+    align-items: flex-end; justify-content: center;
+  }
+  #budget-modal.open { display: flex; }
+  .modal-inner {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 36px;
+    width: 100%; max-width: 480px;
+    animation: slideup .25s ease;
+  }
+  @keyframes slideup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-title {
+    font-family: var(--font-mono); font-size: 14px;
+    color: var(--accent); letter-spacing: 2px;
+    margin-bottom: 16px; text-align: center;
+  }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select {
+    width: 100%; background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    color: var(--text); font-family: var(--font-mono); font-size: 13px;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .risk-btns { display: flex; gap: 8px; }
+  .risk-btn {
+    flex: 1; padding: 8px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--muted);
+    font-family: var(--font-mono); font-size: 11px;
+    cursor: pointer; transition: all .2s; text-align: center;
+  }
+  .risk-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,255,136,.1); }
+  #budget-summary {
+    background: var(--bg2); border-radius: 8px; padding: 12px;
+    margin-top: 14px; font-family: var(--font-mono); font-size: 11px;
+    border: 1px solid var(--border);
+  }
+  .budget-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .budget-row:last-child { margin-bottom: 0; }
+  .budget-row .lbl { color: var(--muted); }
+  .budget-row .val { color: var(--accent); }
+  .btn-save {
+    width: 100%; padding: 12px;
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 8px;
+    font-family: var(--font-mono); font-size: 13px;
+    font-weight: 700; cursor: pointer; margin-top: 14px;
+    letter-spacing: 2px;
+  }
+  .btn-close-modal {
+    width: 100%; padding: 10px;
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px;
+    font-family: var(--font-mono); font-size: 11px;
+    cursor: pointer; margin-top: 8px;
+  }
+
+  /* TRACK PANEL */
+  .track-form {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 12px;
+  }
+  .track-form-title { font-family: var(--font-mono); font-size: 11px; color: var(--accent); margin-bottom: 10px; letter-spacing: 1px; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-row .field { flex: 1; margin-bottom: 0; }
+  .btn-add {
+    width: 100%; padding: 10px;
+    background: rgba(0,255,136,.15); border: 1px solid rgba(0,255,136,.3);
+    color: var(--safe); border-radius: 8px;
+    font-family: var(--font-mono); font-size: 11px;
+    cursor: pointer; letter-spacing: 1px;
+  }
+
+  /* TRADE CARD */
+  .trade-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+  }
+  .trade-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px;
+  }
+  .trade-name { font-size: 14px; font-weight: 700; }
+  .trade-pnl { font-family: var(--font-mono); font-size: 13px; }
+  .exit-plan {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 10px;
+  }
+  .exit-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .exit-row:last-child { margin-bottom: 0; }
+  .exit-label { color: var(--muted); }
+
+  /* EXIT PANEL */
+  .exit-section { margin-bottom: 16px; }
+  .section-title {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); letter-spacing: 2px;
+    margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .playbook-item {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;
+  }
+  .playbook-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  .playbook-desc { font-family: var(--font-mono); font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+  /* HYPE PANEL */
+  .signal-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; margin-bottom: 8px;
+  }
+  .signal-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .signal-name { font-size: 14px; font-weight: 700; }
+  .signal-source { font-family: var(--font-mono); font-size: 9px; color: var(--muted); }
+  .signal-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag {
+    padding: 2px 7px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 9px;
+  }
+  .tag-pump { background: rgba(255,51,102,.2); color: var(--danger); border: 1px solid rgba(255,51,102,.3); }
+  .tag-whale { background: rgba(0,170,255,.2); color: var(--accent4); border: 1px solid rgba(0,170,255,.3); }
+  .tag-tg { background: rgba(0,255,136,.2); color: var(--safe); border: 1px solid rgba(0,255,136,.3); }
+  .tag-early { background: rgba(255,170,0,.2); color: var(--warn); border: 1px solid rgba(255,170,0,.3); }
+  .tag-new { background: rgba(160,80,255,.2); color: #cc88ff; border: 1px solid rgba(160,80,255,.3); }
+
+  /* EARLY BANNER */
+  .early-banner {
+    background: rgba(255,51,102,.1); border: 1px solid rgba(255,51,102,.4);
+    border-radius: 6px; padding: 5px 10px; margin-bottom: 6px;
+    font-family: var(--font-mono); font-size: 9px; color: var(--danger);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* LOADING */
+  .loading {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 40px;
+    color: var(--muted); font-family: var(--font-mono); font-size: 11px;
+  }
+  .loading-spinner {
+    width: 32px; height: 32px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 12px;
+  }
+
+  /* EMPTY */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0; padding: 5px 10px;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: var(--panel); color: var(--muted);
+    font-family: var(--font-mono); font-size: 9px;
+    cursor: pointer; transition: all .2s;
+  }
+  .filter-chip.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(0,255,136,.1);
+  }
+
+  /* NETWORK ERROR */
+  .net-error {
+    background: rgba(255,51,102,.1); border: 1px solid rgba(255,51,102,.3);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--danger);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="logo">SOL<span>⚡</span>SNIPER</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div id="budget-badge" onclick="openBudget()">💰 SET BUDGET</div>
+      <button id="refresh-btn" onclick="refreshAll()">↻</button>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div id="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Connecting...</span>
+    <span id="last-update"></span>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <div class="tab active" data-tab="hype">🔥 HYPE</div>
+    <div class="tab" data-tab="coins">🪙 COINS</div>
+    <div class="tab" data-tab="track">📊 TRACK</div>
+    <div class="tab" data-tab="exit">🎯 EXIT</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- HYPE TAB -->
+    <div id="tab-hype" class="panel active">
+      <div id="hype-content">
+        <div class="loading"><div class="loading-spinner"></div>Scanning signals...</div>
+      </div>
+    </div>
+
+    <!-- COINS TAB -->
+    <div id="tab-coins" class="panel">
+      <div class="filter-bar">
+        <div class="filter-chip active" data-filter="all">ALL</div>
+        <div class="filter-chip" data-filter="hot">🔥 HOT</div>
+        <div class="filter-chip" data-filter="new">🆕 NEW</div>
+        <div class="filter-chip" data-filter="safe">✅ SAFE</div>
+        <div class="filter-chip" data-filter="risky">⚠️ RISKY</div>
+      </div>
+      <div id="coins-content">
+        <div class="loading"><div class="loading-spinner"></div>Loading live coins...</div>
+      </div>
+    </div>
+
+    <!-- TRACK TAB -->
+    <div id="tab-track" class="panel">
+      <div class="track-form">
+        <div class="track-form-title">// LOG NEW TRADE</div>
+        <div class="form-row">
+          <div class="field"><label>TOKEN NAME</label><input id="t-name" placeholder="e.g. BONK" /></div>
+          <div class="field"><label>CONTRACT</label><input id="t-ca" placeholder="paste CA" /></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>ENTRY PRICE ($)</label><input id="t-entry" type="number" placeholder="0.0000001" /></div>
+          <div class="field"><label>AMOUNT (SOL)</label><input id="t-amount" type="number" placeholder="0.1" /></div>
+        </div>
+        <button class="btn-add" onclick="addTrade()">+ ADD TRADE</button>
+      </div>
+      <div id="trades-list"></div>
+    </div>
+
+    <!-- EXIT TAB -->
+    <div id="tab-exit" class="panel">
+      <div class="exit-section">
+        <div class="section-title">// EXIT PLAYBOOK</div>
+        <div class="playbook-item">
+          <div class="playbook-title green">🎯 Stage 1 — Take 30% at 2x</div>
+          <div class="playbook-desc">Recover most of your initial capital. You're now playing with house money for the rest.</div>
+        </div>
+        <div class="playbook-item">
+          <div class="playbook-title green">🎯 Stage 2 — Take 40% at 5x</div>
+          <div class="playbook-desc">Lock in the big win. Leave 30% to ride for the 10x+ moon scenario.</div>
+        </div>
+        <div class="playbook-item">
+          <div class="playbook-title orange">⚡ Stage 3 — Ride remaining 30%</div>
+          <div class="playbook-desc">Set a trailing stop at -50% from ATH. If it bleeds back, you already won.</div>
+        </div>
+        <div class="playbook-item">
+          <div class="playbook-title red">🛑 Stop Loss — Cut at -30%</div>
+          <div class="playbook-desc">Non-negotiable. If price drops 30% from entry, exit immediately. No exceptions.</div>
+        </div>
+      </div>
+
+      <div class="exit-section">
+        <div class="section-title">// RUG SIGNALS — DUMP IMMEDIATELY</div>
+        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
+          <div class="playbook-title red">🚨 Dev wallet dumps</div>
+          <div class="playbook-desc">If top wallet sells >5% of supply in one tx — EXIT NOW, no questions.</div>
+        </div>
+        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
+          <div class="playbook-title red">🚨 LP removed</div>
+          <div class="playbook-desc">If liquidity drops suddenly — classic rug. Exit before you're holding bags.</div>
+        </div>
+        <div class="playbook-item" style="border-color:rgba(255,51,102,.4)">
+          <div class="playbook-title red">🚨 Telegram goes silent</div>
+          <div class="playbook-desc">Dev ghosts the community = exit signal. Real projects communicate.</div>
+        </div>
+        <div class="playbook-item" style="border-color:rgba(255,170,0,.4)">
+          <div class="playbook-title orange">⚠️ Volume dries up fast</div>
+          <div class="playbook-desc">If 24h volume drops >70% in 2 hours, momentum is dead. Take profits or cut.</div>
+        </div>
+      </div>
+
+      <div class="exit-section">
+        <div class="section-title">// SET DEXSCREENER ALERTS</div>
+        <div id="dex-alerts-list">
+          <div class="empty">Log trades in TRACK tab to generate alert links</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- BUDGET MODAL -->
+<div id="budget-modal">
+  <div class="modal-inner">
+    <div class="modal-title">// BUDGET ENGINE</div>
+    <div class="field">
+      <label>BANKROLL (SOL)</label>
+      <input id="b-bankroll" type="number" placeholder="e.g. 1.0" step="0.1" />
+    </div>
+    <div class="field">
+      <label>RISK PER TRADE</label>
+      <div class="risk-btns">
+        <div class="risk-btn" data-risk="5" onclick="setRisk(5)">5% SAFE</div>
+        <div class="risk-btn active" data-risk="10" onclick="setRisk(10)">10% MED</div>
+        <div class="risk-btn" data-risk="20" onclick="setRisk(20)">20% DEGEN</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>MAX OPEN POSITIONS</label>
+      <input id="b-positions" type="number" placeholder="5" value="5" min="1" max="20" />
+    </div>
+    <div id="budget-summary">
+      <div class="budget-row"><span class="lbl">Per trade (safe)</span><span class="val" id="bs-safe">—</span></div>
+      <div class="budget-row"><span class="lbl">Per trade (medium)</span><span class="val" id="bs-med">—</span></div>
+      <div class="budget-row"><span class="lbl">Per trade (degen)</span><span class="val" id="bs-degen">—</span></div>
+      <div class="budget-row"><span class="lbl">Max deployed</span><span class="val" id="bs-max">—</span></div>
+      <div class="budget-row"><span class="lbl">Reserve</span><span class="val" id="bs-reserve">—</span></div>
+    </div>
+    <button class="btn-save" onclick="saveBudget()">LOCK IN</button>
+    <button class="btn-close-modal" onclick="closeBudget()">CLOSE</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// STATE
+// =============================================
+let budget = { bankroll: 0, risk: 10, maxPositions: 5 };
+let coins = [];
+let trades = JSON.parse(localStorage.getItem('sniper_trades') || '[]');
+let activeFilter = 'all';
+let refreshTimer = null;
+
+// =============================================
+// TABS
+// =============================================
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'track') renderTrades();
+    if (t.dataset.tab === 'exit') renderExitAlerts();
+  });
+});
+
+// =============================================
+// FILTER CHIPS
+// =============================================
+document.querySelectorAll('.filter-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    activeFilter = c.dataset.filter;
+    renderCoins();
+  });
+});
+
+// =============================================
+// STATUS
+// =============================================
+function setStatus(live, text) {
+  const dot = document.getElementById('status-dot');
+  const st = document.getElementById('status-text');
+  if (live) { dot.classList.add('live'); } else { dot.classList.remove('live'); }
+  st.textContent = text;
+  if (live) {
+    document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+// =============================================
+// DEXSCREENER API — Live Solana tokens
+// =============================================
+async function fetchDexScreener() {
+  try {
+    // Get latest Solana tokens by volume from DexScreener
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112', {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!res.ok) throw new Error('DexScreener failed');
+    const data = await res.json();
+    return data.pairs || [];
+  } catch(e) {
+    console.warn('DexScreener primary failed, trying search:', e);
+    return fetchDexScreenerSearch();
+  }
+}
+
+async function fetchDexScreenerSearch() {
+  try {
+    // Search for hot Solana pairs
+    const queries = ['SOL', 'pump', 'degen'];
+    const results = [];
+    for (const q of queries) {
+      const r = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${q}`, {
+        signal: AbortSignal.timeout(6000)
+      });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.pairs) results.push(...d.pairs.filter(p => p.chainId === 'solana'));
+      }
+    }
+    return results;
+  } catch(e) {
+    console.warn('DexScreener search failed:', e);
+    return [];
+  }
+}
+
+async function fetchNewPairs() {
+  try {
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112', {
+      signal: AbortSignal.timeout(8000)
+    });
+    const data = await res.json();
+    const pairs = (data.pairs || []).filter(p =>
+      p.chainId === 'solana' &&
+      p.pairCreatedAt &&
+      Date.now() - p.pairCreatedAt < 24 * 3600 * 1000
+    );
+    return pairs;
+  } catch(e) {
+    return [];
+  }
+}
+
+// =============================================
+// RUGCHECK API
+// =============================================
+async function fetchRugScore(mint) {
+  try {
+    const res = await fetch(`https://api.rugcheck.xyz/v1/tokens/${mint}/report/summary`, {
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return d;
+  } catch(e) {
+    return null;
+  }
+}
+
+// =============================================
+// PROCESS + ENRICH PAIRS
+// =============================================
+function processPairs(rawPairs) {
+  return rawPairs
+    .filter(p => p.chainId === 'solana' && p.baseToken && p.priceUsd)
+    .slice(0, 40)
+    .map(p => ({
+      name: p.baseToken.name || p.baseToken.symbol,
+      ticker: p.baseToken.symbol,
+      mint: p.baseToken.address,
+      price: parseFloat(p.priceUsd) || 0,
+      change24h: parseFloat(p.priceChange?.h24) || 0,
+      change1h: parseFloat(p.priceChange?.h1) || 0,
+      volume24h: parseFloat(p.volume?.h24) || 0,
+      mcap: parseFloat(p.fdv) || 0,
+      liquidity: parseFloat(p.liquidity?.usd) || 0,
+      txns24h: (p.txns?.h24?.buys || 0) + (p.txns?.h24?.sells || 0),
+      buys24h: p.txns?.h24?.buys || 0,
+      sells24h: p.txns?.h24?.sells || 0,
+      pairUrl: p.url || `https://dexscreener.com/solana/${p.pairAddress}`,
+      pairAddress: p.pairAddress,
+      created: p.pairCreatedAt || 0,
+      rugScore: null,
+      rugLabel: 'Checking...',
+    }));
+}
+
+function fmtNum(n) {
+  if (!n) return '$0';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(0);
+}
+
+function fmtPrice(p) {
+  if (!p) return '$0';
+  if (p < 0.000001) return '$' + p.toExponential(2);
+  if (p < 0.01) return '$' + p.toFixed(7);
+  if (p < 1) return '$' + p.toFixed(4);
+  return '$' + p.toFixed(2);
+}
+
+function ageStr(ts) {
+  if (!ts) return '?';
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs/24) + 'd ago';
+}
+
+function rugClass(score) {
+  if (score === null) return 'rug-medium';
+  if (score < 300) return 'rug-safe';
+  if (score < 700) return 'rug-medium';
+  return 'rug-danger';
+}
+
+function rugLabel(score) {
+  if (score === null) return 'Unknown';
+  if (score < 300) return 'SAFE';
+  if (score < 700) return 'CAUTION';
+  return 'DANGER';
+}
+
+function perTradeAmount() {
+  if (!budget.bankroll) return null;
+  return (budget.bankroll * budget.risk / 100).toFixed(3);
+}
+
+// =============================================
+// RENDER HYPE
+// =============================================
+function renderHype() {
+  const el = document.getElementById('hype-content');
+  if (!coins.length) {
+    el.innerHTML = '<div class="empty">No signals yet. Pull to refresh.</div>';
+    return;
+  }
+
+  // Hot coins = high volume + positive change
+  const hot = [...coins].sort((a,b) => b.volume24h - a.volume24h).slice(0, 15);
+  const pt = perTradeAmount();
+
+  el.innerHTML = hot.map(c => {
+    const isNew = c.created && Date.now() - c.created < 6 * 3600 * 1000;
+    const isHot = c.change1h > 20;
+    const buyRatio = c.txns24h > 0 ? (c.buys24h / c.txns24h * 100).toFixed(0) : 0;
+    const sources = [];
+    if (c.volume24h > 100000) sources.push('<span class="tag tag-whale">🐋 WHALE</span>');
+    if (isNew) sources.push('<span class="tag tag-new">🆕 NEW LAUNCH</span>');
+    if (isHot) sources.push('<span class="tag tag-pump">🚀 PUMPING</span>');
+    if (buyRatio > 60) sources.push('<span class="tag tag-tg">📈 BUY PRESSURE</span>');
+
+    return `<div class="signal-card">
+      ${isNew ? '<div class="early-banner">⚠️ EARLY ENTRY — HIGH RISK / HIGH REWARD — DYOR</div>' : ''}
+      <div class="signal-header">
+        <div>
+          <div class="signal-name">${c.ticker} <span style="color:var(--muted);font-size:11px;font-weight:400">${c.name}</span></div>
+          <div class="signal-source">${ageStr(c.created)} • ${fmtNum(c.volume24h)} vol</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--font-mono);font-size:13px">${fmtPrice(c.price)}</div>
+          <div class="coin-change ${c.change1h >= 0 ? 'green' : 'red'}">${c.change1h >= 0 ? '+' : ''}${c.change1h.toFixed(1)}% 1h</div>
+        </div>
+      </div>
+      <div class="signal-tags">${sources.join('')}</div>
+      ${pt ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--accent)">💰 Suggested buy: <strong>${pt} SOL</strong></div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <a href="${c.pairUrl}" target="_blank" class="btn btn-chart">📊 CHART</a>
+        <a href="https://phantom.app/ul/v1/browse?ref=${encodeURIComponent(c.pairUrl)}" class="btn btn-buy">👻 BUY</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =============================================
+// RENDER COINS
+// =============================================
+function renderCoins() {
+  const el = document.getElementById('coins-content');
+  if (!coins.length) {
+    el.innerHTML = '<div class="empty">No coins loaded.</div>';
+    return;
+  }
+
+  let filtered = [...coins];
+  if (activeFilter === 'hot') filtered = filtered.filter(c => c.change1h > 10 || c.change24h > 50);
+  if (activeFilter === 'new') filtered = filtered.filter(c => c.created && Date.now() - c.created < 6 * 3600 * 1000);
+  if (activeFilter === 'safe') filtered = filtered.filter(c => c.rugScore !== null && c.rugScore < 300);
+  if (activeFilter === 'risky') filtered = filtered.filter(c => c.rugScore === null || c.rugScore >= 500);
+
+  const pt = perTradeAmount();
+
+  el.innerHTML = filtered.slice(0, 25).map(c => {
+    const rs = c.rugScore;
+    const rPct = rs !== null ? Math.min(100, rs / 10) : 50;
+    const icon = c.ticker ? c.ticker.charAt(0).toUpperCase() : '?';
+
+    return `<div class="coin-card">
+      <div class="coin-header">
+        <div class="coin-name-wrap">
+          <div class="coin-icon">${icon}</div>
+          <div>
+            <div class="coin-name">${c.ticker}</div>
+            <div class="coin-ticker">${c.name}</div>
+          </div>
+        </div>
+        <div class="coin-price">
+          <div>${fmtPrice(c.price)}</div>
+          <div class="coin-change ${c.change24h >= 0 ? 'green' : 'red'}">${c.change24h >= 0 ? '▲' : '▼'}${Math.abs(c.change24h).toFixed(1)}% 24h</div>
+        </div>
+      </div>
+      <div class="rug-bar-wrap">
+        <div class="rug-label"><span>RUG RISK: <strong>${rugLabel(rs)}</strong></span><span>${ageStr(c.created)}</span></div>
+        <div class="rug-bar"><div class="rug-fill ${rugClass(rs)}" style="width:${rPct}%"></div></div>
+      </div>
+      <div class="coin-stats">
+        <div class="stat"><div class="stat-label">MCAP</div><div class="stat-value">${fmtNum(c.mcap)}</div></div>
+        <div class="stat"><div class="stat-label">VOL 24H</div><div class="stat-value">${fmtNum(c.volume24h)}</div></div>
+        <div class="stat"><div class="stat-label">LIQ</div><div class="stat-value">${fmtNum(c.liquidity)}</div></div>
+      </div>
+      ${pt ? `<div style="padding:6px 12px;font-family:var(--font-mono);font-size:10px;color:var(--accent);border-top:1px solid var(--border)">💰 Position size: <strong>${pt} SOL</strong></div>` : ''}
+      <div class="coin-actions">
+        <a href="${c.pairUrl}" target="_blank" class="btn btn-chart">📊 CHART</a>
+        <a href="https://phantom.app/ul/v1/browse?ref=${encodeURIComponent(c.pairUrl)}" class="btn btn-buy">👻 BUY</a>
+        <div class="btn btn-track" onclick='trackCoin(${JSON.stringify(c).replace(/'/g, "&#39;")})'>📌 TRACK</div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty">No coins match this filter.</div>';
+}
+
+// =============================================
+// TRADES
+// =============================================
+function trackCoin(c) {
+  document.getElementById('t-name').value = c.ticker;
+  document.getElementById('t-ca').value = c.mint;
+  document.getElementById('t-entry').value = c.price;
+  if (budget.bankroll) document.getElementById('t-amount').value = perTradeAmount();
+  document.querySelectorAll('.tab')[2].click();
+}
+
+function addTrade() {
+  const name = document.getElementById('t-name').value.trim();
+  const ca = document.getElementById('t-ca').value.trim();
+  const entry = parseFloat(document.getElementById('t-entry').value);
+  const amount = parseFloat(document.getElementById('t-amount').value);
+  if (!name || !entry || !amount) { alert('Fill in name, entry price, and amount.'); return; }
+  trades.push({ id: Date.now(), name, ca, entry, amount, date: new Date().toISOString() });
+  localStorage.setItem('sniper_trades', JSON.stringify(trades));
+  ['t-name','t-ca','t-entry','t-amount'].forEach(id => document.getElementById(id).value = '');
+  renderTrades();
+  renderExitAlerts();
+}
+
+function removeTrade(id) {
+  trades = trades.filter(t => t.id !== id);
+  localStorage.setItem('sniper_trades', JSON.stringify(trades));
+  renderTrades();
+  renderExitAlerts();
+}
+
+function renderTrades() {
+  const el = document.getElementById('trades-list');
+  if (!trades.length) {
+    el.innerHTML = '<div class="empty">No trades logged yet.</div>';
+    return;
+  }
+  el.innerHTML = trades.map(t => {
+    const solPrice = 150; // approximate
+    const usdVal = t.amount * solPrice;
+    return `<div class="trade-card">
+      <div class="trade-header">
+        <div>
+          <div class="trade-name">${t.name}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${t.date.slice(0,10)} • ${t.amount} SOL</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="trade-pnl orange">Entry: ${fmtPrice(t.entry)}</div>
+          <button onclick="removeTrade(${t.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>
+        </div>
+      </div>
+      <div class="exit-plan">
+        <div class="exit-row"><span class="exit-label">🎯 Sell 30% at 2x:</span><span class="green">${fmtPrice(t.entry * 2)}</span></div>
+        <div class="exit-row"><span class="exit-label">🎯 Sell 40% at 5x:</span><span class="green">${fmtPrice(t.entry * 5)}</span></div>
+        <div class="exit-row"><span class="exit-label">🚀 Ride 30% at 10x:</span><span class="green">${fmtPrice(t.entry * 10)}</span></div>
+        <div class="exit-row"><span class="exit-label">🛑 Stop loss (-30%):</span><span class="red">${fmtPrice(t.entry * 0.7)}</span></div>
+      </div>
+      ${t.ca ? `<div style="padding:6px 12px;border-top:1px solid var(--border)">
+        <a href="https://dexscreener.com/solana/${t.ca}" target="_blank" class="btn btn-chart" style="display:inline-block;width:auto;padding:5px 10px">📊 DEX Chart</a>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderExitAlerts() {
+  const el = document.getElementById('dex-alerts-list');
+  if (!trades.length) {
+    el.innerHTML = '<div class="empty">Log trades in TRACK tab to generate alert links</div>';
+    return;
+  }
+  el.innerHTML = trades.map(t => `<div class="playbook-item">
+    <div class="playbook-title">${t.name}</div>
+    <div class="playbook-desc" style="margin-bottom:6px">Entry: ${fmtPrice(t.entry)} | Alerts: ${fmtPrice(t.entry*2)} / ${fmtPrice(t.entry*5)} / Stop: ${fmtPrice(t.entry*0.7)}</div>
+    ${t.ca ? `<a href="https://dexscreener.com/solana/${t.ca}" target="_blank" class="btn btn-chart" style="display:inline-block;width:auto;padding:5px 10px">🔔 Open DEXScreener → Set Alerts</a>` : '<span style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">No contract address</span>'}
+  </div>`).join('');
+}
+
+// =============================================
+// BUDGET
+// =============================================
+let selectedRisk = 10;
+function setRisk(r) {
+  selectedRisk = r;
+  document.querySelectorAll('.risk-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.risk) === r));
+  updateBudgetSummary();
+}
+
+function updateBudgetSummary() {
+  const br = parseFloat(document.getElementById('b-bankroll')?.value) || 0;
+  const pos = parseInt(document.getElementById('b-positions')?.value) || 5;
+  if (!br) return;
+  document.getElementById('bs-safe').textContent = (br * 0.05).toFixed(3) + ' SOL';
+  document.getElementById('bs-med').textContent = (br * 0.10).toFixed(3) + ' SOL';
+  document.getElementById('bs-degen').textContent = (br * 0.20).toFixed(3) + ' SOL';
+  document.getElementById('bs-max').textContent = (br * selectedRisk / 100 * pos).toFixed(3) + ' SOL';
+  document.getElementById('bs-reserve').textContent = (br - br * selectedRisk / 100 * pos).toFixed(3) + ' SOL';
+}
+
+document.getElementById('b-bankroll')?.addEventListener('input', updateBudgetSummary);
+document.getElementById('b-positions')?.addEventListener('input', updateBudgetSummary);
+
+function openBudget() { document.getElementById('budget-modal').classList.add('open'); }
+function closeBudget() { document.getElementById('budget-modal').classList.remove('open'); }
+
+function saveBudget() {
+  const br = parseFloat(document.getElementById('b-bankroll').value) || 0;
+  const pos = parseInt(document.getElementById('b-positions').value) || 5;
+  budget = { bankroll: br, risk: selectedRisk, maxPositions: pos };
+  const badge = document.getElementById('budget-badge');
+  badge.textContent = `💰 ${br} SOL / ${selectedRisk}%`;
+  closeBudget();
+  renderHype();
+  renderCoins();
+}
+
+// =============================================
+// MAIN FETCH + REFRESH
+// =============================================
+async function loadData() {
+  setStatus(false, 'Fetching live data...');
+  document.getElementById('refresh-btn').classList.add('spinning');
+
+  try {
+    const rawPairs = await fetchDexScreener();
+    if (!rawPairs.length) throw new Error('No pairs returned');
+
+    coins = processPairs(rawPairs);
+    setStatus(true, `Live — ${coins.length} coins`);
+    renderHype();
+    renderCoins();
+
+    // Background rug check for first 10 coins
+    enrichRugScores(coins.slice(0, 10));
+
+  } catch(e) {
+    console.error('Load failed:', e);
+    setStatus(false, 'API error — retrying...');
+    document.getElementById('hype-content').innerHTML =
+      '<div class="net-error">⚠️ Could not reach DexScreener API.<br>This app requires internet. Try refreshing.</div>';
+    document.getElementById('coins-content').innerHTML =
+      '<div class="net-error">⚠️ Could not reach DexScreener API.<br>This app requires internet. Try refreshing.</div>';
+  }
+
+  document.getElementById('refresh-btn').classList.remove('spinning');
+}
+
+async function enrichRugScores(batch) {
+  for (const coin of batch) {
+    try {
+      const report = await fetchRugScore(coin.mint);
+      if (report) {
+        coin.rugScore = report.score || null;
+        // Re-render silently
+        renderCoins();
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 300)); // rate limit
+  }
+}
+
+function refreshAll() {
+  loadData();
+}
+
+// Auto-refresh every 60 seconds
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadData, 60000);
+}
+
+// Init
+loadData();
+renderTrades();
+startAutoRefresh();
+</script>
+</body>
+</html>
