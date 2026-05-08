@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SOL SNIPER</title>
 <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SOL SNIPER">
+<link rel="apple-touch-icon" href="https://via.placeholder.com/192x192/060608/00e87a?text=S">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -382,6 +386,101 @@
     transition: width 1s linear;
   }
 
+
+
+  /* AI ADVISOR */
+  .ai-btn {
+    width: 100%; padding: 16px; border-radius: 16px;
+    background: linear-gradient(135deg, #00e87a, #00aaff);
+    border: none; color: #000; font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 3px; cursor: pointer;
+    margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .ai-btn:active { opacity: 0.85; transform: scale(0.98); }
+  .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ai-response {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    min-height: 80px;
+  }
+  .ai-response.loading { display: flex; align-items: center; gap: 12px; }
+  .ai-thinking {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .ai-thinking span {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); display: inline-block;
+    animation: bounce 1.2s infinite;
+  }
+  .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+  .ai-pick {
+    background: var(--card); border: 1px solid rgba(0,232,122,0.3);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  }
+  .ai-pick-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .ai-pick-sym { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--green); }
+  .ai-pick-rating {
+    padding: 4px 12px; border-radius: 20px;
+    background: rgba(0,232,122,0.15); color: var(--green);
+    font-weight: 700; font-size: 12px; letter-spacing: 1px;
+  }
+  .ai-pick-rating.strong { background: rgba(0,232,122,0.2); color: var(--green); }
+  .ai-pick-rating.moderate { background: rgba(255,204,0,0.2); color: var(--yellow); }
+  .ai-pick-rating.risky { background: rgba(255,45,85,0.2); color: var(--red); }
+  .ai-pick-text { font-size: 13px; line-height: 1.7; color: var(--sub); margin-bottom: 12px; }
+  .ai-pick-text strong { color: var(--text); }
+  .ai-levels {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 12px;
+  }
+  .ai-level {
+    background: var(--bg); border-radius: 8px; padding: 8px; text-align: center;
+  }
+  .ai-level-lbl { font-size: 9px; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
+  .ai-level-val { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; margin-top: 2px; }
+  .ai-disclaimer {
+    font-size: 10px; color: var(--muted); text-align: center;
+    padding: 12px; border-top: 1px solid var(--border); margin-top: 8px;
+  }
+  .ai-last-updated { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 12px; }
+
+  /* INTEL TAB */
+  .tg-card {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    text-decoration: none; color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .tg-card:active { border-color: var(--green); }
+  .tg-icon { font-size: 24px; width: 36px; text-align: center; }
+  .tg-info { flex: 1; }
+  .tg-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .tg-desc { font-size: 11px; color: var(--sub); }
+  .tg-arrow { color: var(--muted); font-size: 18px; }
+  .ct-chip {
+    padding: 7px 14px; border-radius: 20px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--blue); font-size: 12px; font-weight: 600;
+    text-decoration: none; white-space: nowrap;
+  }
+  .ct-chip:active { background: rgba(0,170,255,0.15); }
+  .pump-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pump-info {}
+  .pump-sym { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; }
+  .pump-meta { font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .pump-right { text-align: right; }
+  .pump-age { font-size: 11px; color: var(--yellow); margin-bottom: 4px; }
+  .pump-buy { padding: 6px 14px; border-radius: 8px; background: var(--green); border: none; color: #000; font-weight: 700; font-size: 12px; cursor: pointer; }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -436,7 +535,9 @@
 
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('fire')" id="tab-fire">🔥 Fire</button>
+    <button class="nav-btn" onclick="switchTab('ai')" id="tab-ai">🤖 AI</button>
     <button class="nav-btn" onclick="switchTab('all')" id="tab-all">🪙 All</button>
+    <button class="nav-btn" onclick="switchTab('intel')" id="tab-intel">📡 Intel</button>
     <button class="nav-btn" onclick="switchTab('track')" id="tab-track">📊 Track</button>
     <button class="nav-btn" onclick="switchTab('exits')" id="tab-exits">🎯 Exits</button>
   </div>
@@ -470,6 +571,102 @@
       <div id="all-list"><div class="loading-state"><div class="loader"></div><p>Loading coins…</p></div></div>
     </div>
 
+
+
+    <!-- AI ADVISOR TAB -->
+    <div class="tab" id="tab-content-ai">
+      <div class="status-bar">
+        <div class="status-label">AI Trading Advisor</div>
+        <div class="live-dot">POWERED BY CLAUDE</div>
+      </div>
+
+      <button class="ai-btn" id="ai-analyze-btn" onclick="runAIAnalysis()">
+        🤖 ANALYZE MARKET NOW
+      </button>
+
+      <div id="ai-last-updated" class="ai-last-updated"></div>
+      <div id="ai-output"></div>
+
+      <div class="ai-disclaimer">
+        ⚠️ AI analysis is for informational purposes only. Not financial advice.
+        Crypto is high risk — never invest more than you can afford to lose.
+      </div>
+    </div>
+
+    <!-- INTEL TAB -->
+    <div class="tab" id="tab-content-intel">
+      <div class="status-bar">
+        <div class="status-label">Crypto Alpha Intelligence</div>
+        <div class="live-dot">LIVE</div>
+      </div>
+
+      <!-- PUMP.FUN LIVE FEED -->
+      <div class="section-title">🚀 Pump.fun New Launches</div>
+      <div id="pump-list"><div class="loading-state"><div class="loader"></div><p>Loading new launches…</p></div></div>
+
+      <!-- TRENDING -->
+      <div class="section-title" style="margin-top:24px">🔥 Trending Right Now</div>
+      <div id="trending-list"><div class="loading-state"><div class="loader"></div><p>Loading trending…</p></div></div>
+
+      <!-- TELEGRAM ALPHA CHANNELS -->
+      <div class="section-title" style="margin-top:24px">📱 Telegram Alpha Channels</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+        <a href="https://t.me/pepecoinann" target="_blank" class="tg-card">
+          <div class="tg-icon">📢</div>
+          <div class="tg-info"><div class="tg-name">Pepe Announcements</div><div class="tg-desc">Official Pepe coin alpha & announcements</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/solanafomo" target="_blank" class="tg-card">
+          <div class="tg-icon">⚡</div>
+          <div class="tg-info"><div class="tg-name">Solana FOMO</div><div class="tg-desc">Early Solana gem calls & new launches</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/dexsnipersolana" target="_blank" class="tg-card">
+          <div class="tg-icon">🎯</div>
+          <div class="tg-info"><div class="tg-name">Dex Sniper Solana</div><div class="tg-desc">Real-time Solana token sniping calls</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/pumpfunalpha" target="_blank" class="tg-card">
+          <div class="tg-icon">🔥</div>
+          <div class="tg-info"><div class="tg-name">Pump.fun Alpha</div><div class="tg-desc">Best pump.fun calls before they moon</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/solbonk" target="_blank" class="tg-card">
+          <div class="tg-icon">💎</div>
+          <div class="tg-info"><div class="tg-name">Sol Gems</div><div class="tg-desc">Hidden gem Solana token calls</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/cryptomoonshots" target="_blank" class="tg-card">
+          <div class="tg-icon">🌙</div>
+          <div class="tg-info"><div class="tg-name">Crypto Moonshots</div><div class="tg-desc">High risk high reward moonshot calls</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/WhalesAlertSolana" target="_blank" class="tg-card">
+          <div class="tg-icon">🐋</div>
+          <div class="tg-info"><div class="tg-name">Whale Alert Solana</div><div class="tg-desc">Track whale movements on Solana</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+        <a href="https://t.me/solana_alpha_calls" target="_blank" class="tg-card">
+          <div class="tg-icon">📊</div>
+          <div class="tg-info"><div class="tg-name">Solana Alpha Calls</div><div class="tg-desc">Curated Solana alpha from CT insiders</div></div>
+          <div class="tg-arrow">→</div>
+        </a>
+      </div>
+
+      <!-- TWITTER SEARCH LINKS -->
+      <div class="section-title">🐦 CT Search Links</div>
+      <div style="font-size:12px;color:var(--sub);margin-bottom:12px">Tap to search Twitter/X for live alpha on these topics</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px">
+        <a href="https://twitter.com/search?q=%23Solana+memecoin&f=live" target="_blank" class="ct-chip">#Solana memecoin</a>
+        <a href="https://twitter.com/search?q=pump.fun+new&f=live" target="_blank" class="ct-chip">pump.fun new</a>
+        <a href="https://twitter.com/search?q=solana+100x&f=live" target="_blank" class="ct-chip">Solana 100x</a>
+        <a href="https://twitter.com/search?q=%23pumpfun+launch&f=live" target="_blank" class="ct-chip">#pumpfun launch</a>
+        <a href="https://twitter.com/search?q=solana+gem+early&f=live" target="_blank" class="ct-chip">Solana gem early</a>
+        <a href="https://twitter.com/search?q=just+launched+solana&f=live" target="_blank" class="ct-chip">just launched solana</a>
+        <a href="https://twitter.com/search?q=solana+moonshot+2025&f=live" target="_blank" class="ct-chip">Solana moonshot</a>
+        <a href="https://twitter.com/search?q=%23BONK+OR+%23WIF+OR+%23POPCAT&f=live" target="_blank" class="ct-chip">Top memes live</a>
+      </div>
+    </div>
     <!-- TRACK TAB -->
     <div class="tab" id="tab-content-track">
       <div class="section-title">Log a Trade</div>
@@ -651,6 +848,7 @@ function initApp() {
   updateBudgeBadge();
   renderTrades();
   fetchCoins();
+  fetchIntel();
   startCountdown();
 }
 
@@ -734,6 +932,273 @@ function scoreToken(t) {
     mcap, liq, buys1h, sells1h, buyRatio, ageHours };
 }
 
+
+
+// ---- AI ADVISOR ----
+async function runAIAnalysis() {
+  const btn = document.getElementById('ai-analyze-btn');
+  const output = document.getElementById('ai-output');
+  const lastUpdated = document.getElementById('ai-last-updated');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ SCANNING MARKET...';
+  output.innerHTML = `<div class="ai-response loading">
+    <div class="ai-thinking"><span></span><span></span><span></span></div>
+    <span style="color:var(--sub);font-size:13px">Claude is analyzing live market data…</span>
+  </div>`;
+
+  // Make sure we have coin data
+  if (allCoins.length === 0) {
+    await fetchCoins();
+  }
+
+  // Prepare top candidates for AI (score >= 40, top 20)
+  const candidates = allCoins
+    .filter(t => t._scored.score >= 40)
+    .slice(0, 20)
+    .map(t => {
+      const s = t._scored;
+      const sym = t.baseToken?.symbol || '???';
+      const name = t.baseToken?.name || '';
+      return {
+        symbol: sym,
+        name: name,
+        score: s.score,
+        price: s.price,
+        change1h: s.change1h,
+        change6h: s.change6h,
+        change24h: s.change24h,
+        vol1h: s.vol1h,
+        mcap: s.mcap,
+        liquidity: s.liq,
+        buyRatio: Math.round(s.buyRatio * 100),
+        ageHours: Math.round(s.ageHours),
+        signals: s.signals.map(sg => sg.txt).join(', ')
+      };
+    });
+
+  const budget_info = budget.bankroll > 0
+    ? `User budget: $${budget.bankroll} total, $${(budget.bankroll * budget.riskPct / 100).toFixed(2)} per trade (${budget.riskPct}% risk).`
+    : 'No budget set by user.';
+
+  const prompt = `You are a sharp, experienced Solana memecoin and DeFi trader. Analyze these live Solana tokens and give me your TOP 3 BUY recommendations right now.
+
+${budget_info}
+
+LIVE TOKEN DATA (scored 0-100 by momentum, volume, buy pressure, market cap, age, liquidity):
+${JSON.stringify(candidates, null, 2)}
+
+SCORING CRITERIA:
+- Score 70-100: Strong momentum, high buy pressure, good volume, favorable market cap
+- Score 50-69: Moderate opportunity, watch closely
+- Score 40-49: Speculative, higher risk
+
+Respond ONLY with valid JSON, no markdown, no explanation outside the JSON. Format:
+{
+  "market_summary": "2-3 sentence read on current market conditions based on this data",
+  "picks": [
+    {
+      "symbol": "TOKEN",
+      "rating": "STRONG BUY | MODERATE BUY | SPECULATIVE",
+      "reason": "2-3 sentence plain English explanation of why this is a good buy RIGHT NOW",
+      "entry": "suggested entry price",
+      "stop_loss": "stop loss price",
+      "target_2x": "2x target price",
+      "target_5x": "5x target price",
+      "risk": "LOW | MEDIUM | HIGH",
+      "urgency": "BUY NOW | WATCH | WAIT FOR DIP"
+    }
+  ],
+  "avoid": ["SYMBOL1", "SYMBOL2"],
+  "avoid_reason": "one sentence on what to avoid and why"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+
+    let parsed;
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      throw new Error('Could not parse AI response');
+    }
+
+    // Render
+    let html_out = '';
+
+    // Market summary
+    html_out += `<div class="ai-response" style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--sub);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📊 Market Read</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text)">${parsed.market_summary}</div>
+    </div>`;
+
+    // Picks
+    html_out += `<div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--sub);margin-bottom:12px">TOP PICKS</div>`;
+
+    (parsed.picks || []).forEach((pick, i) => {
+      const ratingClass = pick.rating?.includes('STRONG') ? 'strong' : pick.rating?.includes('MODERATE') ? 'moderate' : 'risky';
+      const riskColor = pick.risk === 'LOW' ? 'var(--green)' : pick.risk === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
+      const urgencyColor = pick.urgency === 'BUY NOW' ? 'var(--green)' : pick.urgency === 'WATCH' ? 'var(--yellow)' : 'var(--sub)';
+
+      // Find coin data for buy button
+      const coinData = allCoins.find(c => (c.baseToken?.symbol || '') === pick.symbol);
+      const addr = coinData?.baseToken?.address || '';
+      const buyUrl = addr
+        ? `https://phantom.app/ul/v1/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000`
+        : `https://jup.ag/swap/SOL-${pick.symbol}`;
+      const dexUrl = addr
+        ? `https://dexscreener.com/solana/${coinData?.pairAddress || addr}`
+        : `https://dexscreener.com/solana?q=${pick.symbol}`;
+
+      html_out += `<div class="ai-pick">
+        <div class="ai-pick-header">
+          <div>
+            <span style="font-size:13px;color:var(--muted);margin-right:6px">#${i+1}</span>
+            <span class="ai-pick-sym">${pick.symbol}</span>
+          </div>
+          <span class="ai-pick-rating ${ratingClass}">${pick.rating}</span>
+        </div>
+        <div class="ai-pick-text">${pick.reason}</div>
+        <div class="ai-levels">
+          <div class="ai-level">
+            <div class="ai-level-lbl">Entry</div>
+            <div class="ai-level-val" style="color:var(--blue)">${pick.entry}</div>
+          </div>
+          <div class="ai-level">
+            <div class="ai-level-lbl">Stop Loss</div>
+            <div class="ai-level-val" style="color:var(--red)">${pick.stop_loss}</div>
+          </div>
+          <div class="ai-level">
+            <div class="ai-level-lbl">Target 2x</div>
+            <div class="ai-level-val" style="color:var(--green)">${pick.target_2x}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:12px">Risk: <span style="color:${riskColor};font-weight:700">${pick.risk}</span></span>
+          <span style="font-size:12px;font-weight:700;color:${urgencyColor}">${pick.urgency}</span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-buy" style="flex:1" onclick="window.open('${buyUrl}','_blank')">BUY IN PHANTOM</button>
+          <a class="btn-chart" href="${dexUrl}" target="_blank">📊</a>
+          <button class="btn-track" onclick="quickTrack('${pick.symbol}','${pick.entry}')">TRACK</button>
+        </div>
+      </div>`;
+    });
+
+    // Avoid section
+    if (parsed.avoid?.length) {
+      html_out += `<div class="ai-response" style="border-color:rgba(255,45,85,0.2)">
+        <div style="font-size:11px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">⛔ Avoid Right Now</div>
+        <div style="font-size:13px;color:var(--sub)">${parsed.avoid.join(', ')} — ${parsed.avoid_reason}</div>
+      </div>`;
+    }
+
+    output.innerHTML = html_out;
+    lastUpdated.textContent = '⏱ Last analyzed: ' + new Date().toLocaleTimeString();
+
+  } catch(e) {
+    output.innerHTML = `<div class="error-banner">⚠️ AI analysis failed: ${e.message}.<br>Make sure you have coins loaded — tap Refresh first then try again.</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🤖 ANALYZE MARKET NOW';
+}
+
+// ---- FETCH PUMP.FUN LAUNCHES ----
+async function fetchIntel() {
+  try {
+    // Newest token launches on Solana
+    const [newRes, trendRes] = await Promise.allSettled([
+      fetch('https://api.dexscreener.com/token-profiles/latest/v1').then(r => r.json()),
+      fetch('https://api.dexscreener.com/latest/dex/search?q=pump+fun+solana').then(r => r.json()),
+    ]);
+
+    // Pump new launches
+    const pumpList = document.getElementById('pump-list');
+    if (newRes.status === 'fulfilled') {
+      const tokens = Array.isArray(newRes.value) ? newRes.value : [];
+      const solTokens = tokens.filter(t => t.chainId === 'solana').slice(0, 15);
+      if (solTokens.length > 0) {
+        pumpList.innerHTML = solTokens.map(t => {
+          const sym = t.baseToken?.symbol || t.symbol || t.tokenAddress?.slice(0,6) || '???';
+          const name = t.baseToken?.name || t.name || '';
+          const addr = t.tokenAddress || t.baseToken?.address || '';
+          const age = t.pairCreatedAt ? fmtAge((Date.now() - t.pairCreatedAt) / 3600000) : 'New';
+          const price = t.priceUsd ? fmtPrice(parseFloat(t.priceUsd)) : 'N/A';
+          const change = t.priceChange?.h1 ? (parseFloat(t.priceChange.h1) >= 0 ? '+' : '') + parseFloat(t.priceChange.h1).toFixed(1) + '%' : '';
+          const changeColor = t.priceChange?.h1 && parseFloat(t.priceChange.h1) >= 0 ? 'var(--green)' : 'var(--red)';
+          const buyUrl = addr ? `https://phantom.app/ul/v1/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000` : `https://jup.ag/swap/SOL-${sym}`;
+          const dexUrl = `https://dexscreener.com/solana/${t.pairAddress || addr}`;
+          return `<div class="pump-card">
+            <div class="pump-info">
+              <div class="pump-sym">${sym}</div>
+              <div class="pump-meta">${name.slice(0,20)} · ${price} <span style="color:${changeColor}">${change}</span></div>
+            </div>
+            <div class="pump-right">
+              <div class="pump-age">🕐 ${age} old</div>
+              <div style="display:flex;gap:6px">
+                <a href="${dexUrl}" target="_blank" style="padding:6px 10px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--sub);font-size:12px;text-decoration:none">📊</a>
+                <button class="pump-buy" onclick="window.open('${buyUrl}','_blank')">BUY</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      } else {
+        pumpList.innerHTML = '<div style="color:var(--sub);font-size:13px;padding:12px">No new launches found right now.</div>';
+      }
+    }
+
+    // Trending
+    const trendingList = document.getElementById('trending-list');
+    if (trendRes.status === 'fulfilled' && trendRes.value.pairs) {
+      const pairs = trendRes.value.pairs
+        .filter(p => p.chainId === 'solana')
+        .sort((a,b) => (parseFloat(b.volume?.h1)||0) - (parseFloat(a.volume?.h1)||0))
+        .slice(0, 10);
+      if (pairs.length > 0) {
+        trendingList.innerHTML = pairs.map((t,i) => {
+          const sym = t.baseToken?.symbol || '???';
+          const addr = t.baseToken?.address || '';
+          const change1h = parseFloat(t.priceChange?.h1) || 0;
+          const vol1h = parseFloat(t.volume?.h1) || 0;
+          const mcap = parseFloat(t.marketCap) || 0;
+          const changeColor = change1h >= 0 ? 'var(--green)' : 'var(--red)';
+          const buyUrl = addr ? `https://phantom.app/ul/v1/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000` : `https://jup.ag/swap/SOL-${sym}`;
+          return `<div class="pump-card">
+            <div class="pump-info">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">#${i+1}</span>
+                <span class="pump-sym">${sym}</span>
+              </div>
+              <div class="pump-meta">Vol/1h: $${fmtNum(vol1h)} · MCap: ${mcap > 0 ? '$'+fmtNum(mcap) : 'N/A'}</div>
+            </div>
+            <div class="pump-right">
+              <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:${changeColor};margin-bottom:4px">${change1h >= 0 ? '+':''}${change1h.toFixed(1)}%</div>
+              <button class="pump-buy" onclick="window.open('${buyUrl}','_blank')">BUY</button>
+            </div>
+          </div>`;
+        }).join('');
+      } else {
+        trendingList.innerHTML = '<div style="color:var(--sub);font-size:13px;padding:12px">No trending data right now.</div>';
+      }
+    }
+  } catch(e) {
+    console.error('Intel fetch error:', e);
+  }
+}
+
 // ---- FETCH ----
 async function fetchCoins() {
   try {
@@ -799,7 +1264,14 @@ async function fetchCoins() {
 // ---- RENDER FIRE TAB ----
 function renderFireTab() {
   // Only show score >= 60
-  const hot = allCoins.filter(t => t._scored.score >= 60).slice(0, 20);
+  // Only show coins with REAL legs: score >= 65, vol > $5k/hr, buy pressure > 55%, liq > $10k
+  const hot = allCoins.filter(t => {
+    const s = t._scored;
+    return s.score >= 65
+      && s.vol1h > 5000
+      && s.buyRatio > 0.55
+      && s.liq > 10000;
+  }).slice(0, 15);
   const list = document.getElementById('fire-list');
   document.getElementById('fire-count').textContent = `${hot.length} high-potential coins`;
 
@@ -837,7 +1309,7 @@ function coinCardHTML(t) {
   const addr = t.baseToken?.address || t.tokenAddress || '';
   const pairAddr = t.pairAddress || '';
   const dexUrl = `https://dexscreener.com/solana/${pairAddr || addr}`;
-  const phantomUrl = addr ? `https://phantom.app/ul/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000` : '#';
+  const phantomUrl = addr ? `https://phantom.app/ul/v1/swap?inputMint=So11111111111111111111111111111111111111112&outputMint=${addr}&amount=100000000&referralToken=` : `https://jup.ag/swap/SOL-${sym}`;
 
   const posSize = budget.bankroll > 0
     ? '$' + ((budget.bankroll * budget.riskPct / 100)).toFixed(2)
@@ -1043,6 +1515,7 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-content-' + tab).classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'intel') fetchIntel();
 }
 
 function setFilter(el, f) {
