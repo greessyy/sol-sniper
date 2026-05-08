@@ -1,14 +1,20 @@
 {
   "name": "SOL SNIPER",
   "short_name": "SNIPER",
-  "start_url": "/sol-sniper/sol-sniper.html",
+  "start_url": "./alpha9q2.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#050508",
-  "theme_color": "#00ff88",
+  "background_color": "#060608",
+  "theme_color": "#00e87a",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/050508/00ff88?text=S",
+      "src": "https://via.placeholder.com/192x192/060608/00e87a?text=S",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/060608/00e87a?text=S",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
